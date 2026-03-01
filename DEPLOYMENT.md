@@ -38,6 +38,7 @@ Before deploying, rotate any secrets that were stored in local `.env` files.
    - **Build command:** `pip install -r requirements.txt`
    - **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
 4. Add environment variables in Render:
+   - `DATABASE_URL` (from Render PostgreSQL internal URL)
    - `AWS_REGION`
    - `NOVA_ENABLED`
    - `NOVA_TEXT_MODEL_ID`

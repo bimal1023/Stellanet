@@ -6,59 +6,129 @@ import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
 
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except Exception:  # pragma: no cover - optional dependency for local sqlite mode
+    psycopg2 = None
+    RealDictCursor = None
+
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_PATH = os.getenv("AUTH_DB_PATH", os.path.join(os.path.dirname(__file__), "auth.db"))
+IS_POSTGRES = DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
 _LOCK = threading.Lock()
 
 
-def _conn() -> sqlite3.Connection:
+def _conn():
+    if IS_POSTGRES:
+        if psycopg2 is None:
+            raise RuntimeError("psycopg2 is required when DATABASE_URL is set")
+        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _adapt_sql(sql: str) -> str:
+    if not IS_POSTGRES:
+        return sql
+    return sql.replace("?", "%s")
+
+
+def _execute(conn, sql: str, params: tuple = ()):
+    cur = conn.cursor()
+    cur.execute(_adapt_sql(sql), params)
+    return cur
+
+
+def _fetchone(conn, sql: str, params: tuple = ()) -> dict | None:
+    cur = _execute(conn, sql, params)
+    row = cur.fetchone()
+    if row is None:
+        return None
+    return dict(row)
 
 
 def init_auth_db() -> None:
     with _LOCK:
         conn = _conn()
         try:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    full_name TEXT NOT NULL,
-                    email TEXT UNIQUE NOT NULL,
-                    password_salt TEXT NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    is_verified INTEGER NOT NULL DEFAULT 1,
-                    verification_token TEXT,
-                    password_reset_token TEXT,
-                    password_reset_expires_at TEXT,
-                    created_at TEXT NOT NULL
+            if IS_POSTGRES:
+                _execute(
+                    conn,
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        full_name TEXT NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_salt TEXT NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        is_verified BOOLEAN NOT NULL DEFAULT TRUE,
+                        verification_token TEXT,
+                        password_reset_token TEXT,
+                        password_reset_expires_at TEXT,
+                        created_at TEXT NOT NULL
+                    )
+                    """,
                 )
-                """
-            )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sessions (
-                    token TEXT PRIMARY KEY,
-                    user_id INTEGER NOT NULL,
-                    created_at TEXT NOT NULL,
-                    expires_at TEXT NOT NULL,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
+                _execute(
+                    conn,
+                    """
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        token TEXT PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        created_at TEXT NOT NULL,
+                        expires_at TEXT NOT NULL
+                    )
+                    """,
                 )
-                """
-            )
-            # Lightweight migration for existing local DBs.
-            for ddl in [
-                "ALTER TABLE users ADD COLUMN is_verified INTEGER NOT NULL DEFAULT 1",
-                "ALTER TABLE users ADD COLUMN verification_token TEXT",
-                "ALTER TABLE users ADD COLUMN password_reset_token TEXT",
-                "ALTER TABLE users ADD COLUMN password_reset_expires_at TEXT",
-            ]:
-                try:
-                    conn.execute(ddl)
-                except sqlite3.OperationalError:
-                    # Column already exists.
-                    pass
+                for ddl in [
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT TRUE",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TEXT",
+                ]:
+                    _execute(conn, ddl)
+            else:
+                _execute(
+                    conn,
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        full_name TEXT NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_salt TEXT NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        is_verified INTEGER NOT NULL DEFAULT 1,
+                        verification_token TEXT,
+                        password_reset_token TEXT,
+                        password_reset_expires_at TEXT,
+                        created_at TEXT NOT NULL
+                    )
+                    """,
+                )
+                _execute(
+                    conn,
+                    """
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        token TEXT PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        created_at TEXT NOT NULL,
+                        expires_at TEXT NOT NULL,
+                        FOREIGN KEY(user_id) REFERENCES users(id)
+                    )
+                    """,
+                )
+                for ddl in [
+                    "ALTER TABLE users ADD COLUMN is_verified INTEGER NOT NULL DEFAULT 1",
+                    "ALTER TABLE users ADD COLUMN verification_token TEXT",
+                    "ALTER TABLE users ADD COLUMN password_reset_token TEXT",
+                    "ALTER TABLE users ADD COLUMN password_reset_expires_at TEXT",
+                ]:
+                    try:
+                        _execute(conn, ddl)
+                    except sqlite3.OperationalError:
+                        pass
             conn.commit()
         finally:
             conn.close()
@@ -78,7 +148,7 @@ def _hash_password(password: str, salt_b64: str) -> str:
     return base64.b64encode(digest).decode("utf-8")
 
 
-def _user_public_dict(row: sqlite3.Row) -> dict:
+def _user_public_dict(row: dict) -> dict:
     return {
         "id": int(row["id"]),
         "full_name": row["full_name"],
@@ -111,22 +181,42 @@ def create_user(full_name: str, email: str, password: str) -> tuple[dict, str]:
         conn = _conn()
         try:
             created_at = _utcnow_iso()
-            cur = conn.execute(
-                """
-                INSERT INTO users (
-                    full_name, email, password_salt, password_hash,
-                    is_verified, verification_token, created_at
+            if IS_POSTGRES:
+                cur = _execute(
+                    conn,
+                    """
+                    INSERT INTO users (
+                        full_name, email, password_salt, password_hash,
+                        is_verified, verification_token, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    RETURNING id
+                    """,
+                    (full_name_n, email_n, salt_b64, pwd_hash, False, verify_token, created_at),
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (full_name_n, email_n, salt_b64, pwd_hash, 0, verify_token, created_at),
-            )
+                user_id = int(cur.fetchone()["id"])
+            else:
+                cur = _execute(
+                    conn,
+                    """
+                    INSERT INTO users (
+                        full_name, email, password_salt, password_hash,
+                        is_verified, verification_token, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (full_name_n, email_n, salt_b64, pwd_hash, 0, verify_token, created_at),
+                )
+                user_id = int(cur.lastrowid)
             conn.commit()
-            user_id = int(cur.lastrowid)
-            row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+            row = _fetchone(conn, "SELECT * FROM users WHERE id = ?", (user_id,))
             return _user_public_dict(row), verify_token
-        except sqlite3.IntegrityError as exc:
-            raise ValueError("Email already exists") from exc
+        except Exception as exc:
+            # sqlite and postgres use different exception classes
+            msg = str(exc).lower()
+            if "unique" in msg or "duplicate key" in msg:
+                raise ValueError("Email already exists") from exc
+            raise
         finally:
             conn.close()
 
@@ -136,7 +226,7 @@ def authenticate_user(email: str, password: str) -> tuple[dict | None, str | Non
     with _LOCK:
         conn = _conn()
         try:
-            row = conn.execute("SELECT * FROM users WHERE email = ?", (email_n,)).fetchone()
+            row = _fetchone(conn, "SELECT * FROM users WHERE email = ?", (email_n,))
             if not row:
                 return None, "invalid_credentials"
             expected = row["password_hash"]
@@ -158,7 +248,8 @@ def create_session(user_id: int, days_valid: int = 7) -> str:
     with _LOCK:
         conn = _conn()
         try:
-            conn.execute(
+            _execute(
+                conn,
                 """
                 INSERT INTO sessions (token, user_id, created_at, expires_at)
                 VALUES (?, ?, ?, ?)
@@ -179,18 +270,19 @@ def verify_email(email: str, token: str) -> dict:
     with _LOCK:
         conn = _conn()
         try:
-            row = conn.execute("SELECT * FROM users WHERE email = ?", (email_n,)).fetchone()
+            row = _fetchone(conn, "SELECT * FROM users WHERE email = ?", (email_n,))
             if not row:
                 raise ValueError("Invalid verification request")
             expected = row["verification_token"] or ""
             if not expected or not secrets.compare_digest(expected, token_n):
                 raise ValueError("Invalid verification token")
-            conn.execute(
-                "UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?",
-                (int(row["id"]),),
+            _execute(
+                conn,
+                "UPDATE users SET is_verified = ?, verification_token = NULL WHERE id = ?",
+                (True if IS_POSTGRES else 1, int(row["id"])),
             )
             conn.commit()
-            updated = conn.execute("SELECT * FROM users WHERE id = ?", (int(row["id"]),)).fetchone()
+            updated = _fetchone(conn, "SELECT * FROM users WHERE id = ?", (int(row["id"]),))
             return _user_public_dict(updated)
         finally:
             conn.close()
@@ -201,12 +293,13 @@ def issue_password_reset(email: str) -> str | None:
     with _LOCK:
         conn = _conn()
         try:
-            row = conn.execute("SELECT * FROM users WHERE email = ?", (email_n,)).fetchone()
+            row = _fetchone(conn, "SELECT * FROM users WHERE email = ?", (email_n,))
             if not row:
                 return None
             token = _generate_token()
             exp = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
-            conn.execute(
+            _execute(
+                conn,
                 "UPDATE users SET password_reset_token = ?, password_reset_expires_at = ? WHERE id = ?",
                 (token, exp, int(row["id"])),
             )
@@ -226,10 +319,7 @@ def reset_password(reset_token: str, new_password: str) -> dict:
     with _LOCK:
         conn = _conn()
         try:
-            row = conn.execute(
-                "SELECT * FROM users WHERE password_reset_token = ?",
-                (token_n,),
-            ).fetchone()
+            row = _fetchone(conn, "SELECT * FROM users WHERE password_reset_token = ?", (token_n,))
             if not row:
                 raise ValueError("Invalid reset token")
 
@@ -240,7 +330,8 @@ def reset_password(reset_token: str, new_password: str) -> dict:
             salt = os.urandom(16)
             salt_b64 = base64.b64encode(salt).decode("utf-8")
             pwd_hash = _hash_password(new_password, salt_b64)
-            conn.execute(
+            _execute(
+                conn,
                 """
                 UPDATE users
                 SET password_salt = ?, password_hash = ?,
@@ -250,7 +341,7 @@ def reset_password(reset_token: str, new_password: str) -> dict:
                 (salt_b64, pwd_hash, int(row["id"])),
             )
             conn.commit()
-            updated = conn.execute("SELECT * FROM users WHERE id = ?", (int(row["id"]),)).fetchone()
+            updated = _fetchone(conn, "SELECT * FROM users WHERE id = ?", (int(row["id"]),))
             return _user_public_dict(updated)
         finally:
             conn.close()
@@ -272,7 +363,8 @@ def get_user_by_token(token: str) -> dict | None:
     with _LOCK:
         conn = _conn()
         try:
-            row = conn.execute(
+            row = _fetchone(
+                conn,
                 """
                 SELECT s.token, s.expires_at, u.*
                 FROM sessions s
@@ -280,11 +372,11 @@ def get_user_by_token(token: str) -> dict | None:
                 WHERE s.token = ?
                 """,
                 (token,),
-            ).fetchone()
+            )
             if not row:
                 return None
             if _is_expired(row["expires_at"]):
-                conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+                _execute(conn, "DELETE FROM sessions WHERE token = ?", (token,))
                 conn.commit()
                 return None
             return _user_public_dict(row)
@@ -299,7 +391,7 @@ def delete_session(token: str) -> None:
     with _LOCK:
         conn = _conn()
         try:
-            conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+            _execute(conn, "DELETE FROM sessions WHERE token = ?", (token,))
             conn.commit()
         finally:
             conn.close()
