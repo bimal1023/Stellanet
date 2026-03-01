@@ -25,7 +25,7 @@ from mailer import email_enabled, send_verification_email, send_password_reset_e
 app = FastAPI()
 init_auth_db()
 AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "true").strip().lower() == "true"
-FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 allow_origins = [*default_origins, FRONTEND_URL] if FRONTEND_URL else default_origins
 
@@ -33,7 +33,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     # Frontend dev port may auto-shift (e.g. 5174, 5175) when occupied.
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
