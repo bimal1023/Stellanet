@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+
+# Python backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/auth.db
+
+# Local env files
+backend/.env
+frontend/Stellanet/.env
+frontend/Stellanet/.env.*
+**/.env
+**/.env.*
+!.env.example
+
+# Node/frontend artifacts
+frontend/Stellanet/node_modules/
+frontend/Stellanet/dist/
+
+# IDE cache
+.idea/
+.vscode/
