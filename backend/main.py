@@ -25,9 +25,23 @@ from mailer import email_enabled, send_verification_email, send_password_reset_e
 app = FastAPI()
 init_auth_db()
 AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "true").strip().lower() == "true"
-FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
-allow_origins = [*default_origins, FRONTEND_URL] if FRONTEND_URL else default_origins
+
+
+def _parse_frontend_origins() -> list[str]:
+    raw_values = [
+        os.getenv("FRONTEND_URL", ""),
+        os.getenv("FRONTEND_URLS", ""),
+    ]
+    expanded = []
+    for raw in raw_values:
+        parts = [p.strip().rstrip("/") for p in (raw or "").split(",")]
+        expanded.extend([p for p in parts if p])
+    # Keep order stable while removing duplicates.
+    return list(dict.fromkeys(expanded))
+
+
+allow_origins = [*default_origins, *_parse_frontend_origins()]
 
 app.add_middleware(
     CORSMiddleware,
