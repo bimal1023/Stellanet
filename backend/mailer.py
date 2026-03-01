@@ -2,6 +2,7 @@ import os
 import smtplib
 from email.message import EmailMessage
 from urllib.parse import quote_plus
+import requests
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -18,13 +19,26 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USERNAME).strip()
 SMTP_USE_TLS = _env_bool("SMTP_USE_TLS", True)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+RESEND_FROM = os.getenv("RESEND_FROM", SMTP_FROM).strip()
+RESEND_API_BASE = "https://api.resend.com/emails"
 
 
 def email_enabled() -> bool:
-    return bool(SMTP_HOST and SMTP_FROM and SMTP_USERNAME and SMTP_PASSWORD)
+    resend_ready = bool(RESEND_API_KEY and RESEND_FROM)
+    smtp_ready = bool(SMTP_HOST and SMTP_FROM and SMTP_USERNAME and SMTP_PASSWORD)
+    return resend_ready or smtp_ready
 
 
 def _send_email(*, to_email: str, subject: str, text_body: str) -> None:
+    if RESEND_API_KEY and RESEND_FROM:
+        _send_email_via_resend(to_email=to_email, subject=subject, text_body=text_body)
+        return
+
+    _send_email_via_smtp(to_email=to_email, subject=subject, text_body=text_body)
+
+
+def _send_email_via_smtp(*, to_email: str, subject: str, text_body: str) -> None:
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = SMTP_FROM
@@ -36,6 +50,21 @@ def _send_email(*, to_email: str, subject: str, text_body: str) -> None:
             server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.send_message(msg)
+
+
+def _send_email_via_resend(*, to_email: str, subject: str, text_body: str) -> None:
+    headers = {
+        "Authorization": f"Bearer {RESEND_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "from": RESEND_FROM,
+        "to": [to_email],
+        "subject": subject,
+        "text": text_body,
+    }
+    response = requests.post(RESEND_API_BASE, headers=headers, json=payload, timeout=20)
+    response.raise_for_status()
 
 
 def send_verification_email(*, to_email: str, full_name: str, verification_token: str) -> None:
