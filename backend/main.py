@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -24,6 +25,7 @@ from mailer import email_enabled, send_verification_email, send_password_reset_e
 
 app = FastAPI()
 init_auth_db()
+logger = logging.getLogger("stellanet.auth")
 AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "true").strip().lower() == "true"
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
@@ -132,13 +134,15 @@ def auth_signup(req: SignUpRequest):
                 verification_token=verification_token,
             )
             response["email_sent"] = True
-        except Exception:
+        except Exception as exc:
+            logger.exception("Verification email send failed for %s", user["email"])
             response["email_sent"] = False
             response["message"] = (
                 "Account created, but email could not be delivered. Use verification token."
             )
             if AUTH_EXPOSE_TOKENS:
                 response["verification_token"] = verification_token
+                response["email_error"] = str(exc)
     elif AUTH_EXPOSE_TOKENS:
         response["verification_token"] = verification_token
 
@@ -192,11 +196,13 @@ def auth_forgot_password(req: ForgotPasswordRequest):
         try:
             send_password_reset_email(to_email=req.email, reset_token=token)
             response["email_sent"] = True
-        except Exception:
+        except Exception as exc:
+            logger.exception("Password reset email send failed for %s", req.email)
             response["email_sent"] = False
             response["message"] = "Reset requested, but email could not be delivered."
             if AUTH_EXPOSE_TOKENS:
                 response["reset_token"] = token
+                response["email_error"] = str(exc)
     elif token and AUTH_EXPOSE_TOKENS:
         response["reset_token"] = token
 
