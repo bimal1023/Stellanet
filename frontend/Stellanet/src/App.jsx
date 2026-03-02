@@ -118,7 +118,7 @@ function StartupFooter({ onNav }) {
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-sky-100 text-xs text-slate-500 flex items-center justify-between">
+        <div className="mt-8 pt-4 border-t border-sky-100 text-xs text-slate-500 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-0 justify-between">
           <span>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
           <span>Made for modern research outreach.</span>
         </div>
@@ -446,11 +446,11 @@ export default function App() {
         <div className="absolute bottom-[-10rem] left-1/3 h-[26rem] w-[26rem] rounded-full bg-blue-300/20 blur-3xl animate-blob" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-5 md:py-8">
         <DiscoveryLoadingOverlay show={discovering} message={loadingMessage} step={loadingStep} />
 
         <header className="mb-8">
-          <div className="flex items-center justify-between gap-6 bg-white/72 backdrop-blur-xl border border-sky-100/90 rounded-2xl px-4 py-3 shadow-[0_15px_35px_-20px_rgba(14,116,144,0.25)]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 bg-white/72 backdrop-blur-xl border border-sky-100/90 rounded-2xl px-4 py-3 shadow-[0_15px_35px_-20px_rgba(14,116,144,0.25)]">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center font-semibold">
                 S
@@ -461,7 +461,7 @@ export default function App() {
               </div>
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav className="w-full md:w-auto flex flex-wrap items-center gap-2 md:justify-end">
               <button
                 type="button"
                 onClick={() => setSitePage("home")}
@@ -519,16 +519,16 @@ export default function App() {
           </div>
 
           <div className="mt-6">
-              <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 leading-tight">
+              <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-slate-900 leading-tight">
                 Stellanet
               </h1>
-              <p className="text-slate-600 mt-4 max-w-3xl text-lg leading-relaxed">
+              <p className="text-slate-600 mt-4 max-w-3xl text-base md:text-lg leading-relaxed">
                 Discover faculty aligned with your research interests and generate
                 personalized outreach email drafts — with human approval.
               </p>
 
               {sitePage === "app" && (
-                <div className="flex items-center gap-3 text-sm mt-6 bg-white/55 border border-sky-100 rounded-full px-4 py-2 w-fit shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm mt-6 bg-white/55 border border-sky-100 rounded-2xl md:rounded-full px-4 py-2 w-fit shadow-sm">
                   <Step id="setup" label="Setup" />
                   <span className="text-slate-300">→</span>
                   <Step id="results" label="Results" />
@@ -538,7 +538,7 @@ export default function App() {
               )}
 
               {sitePage === "app" && payload && (
-                <div className="mt-4 inline-flex items-center gap-2 text-sm bg-white/70 backdrop-blur-xl border border-sky-100 px-4 py-2 rounded-xl shadow-[0_12px_30px_-12px_rgba(14,116,144,0.28)]">
+                <div className="mt-4 inline-flex flex-wrap items-center gap-2 text-sm bg-white/70 backdrop-blur-xl border border-sky-100 px-4 py-2 rounded-xl shadow-[0_12px_30px_-12px_rgba(14,116,144,0.28)]">
                   <span className="text-sky-700 font-semibold">Current run</span>
                   <span className="text-slate-600">
                     {payload.universities.join(", ")} • “{payload.interest}”
@@ -550,7 +550,7 @@ export default function App() {
 
         {sitePage === "home" && (
           <div className="page-transition">
-            <section className="bg-white/80 border border-sky-100 rounded-3xl p-8 md:p-10 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
+            <section className="bg-white/80 border border-sky-100 rounded-3xl p-6 md:p-10 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
                   <Badge tone="info">For students, interns, and researchers</Badge>
@@ -561,7 +561,7 @@ export default function App() {
                     Stellanet helps you discover relevant professors from target universities,
                     rank fit with your interests, and generate polished, tone-controlled email drafts.
                   </p>
-                  <div className="mt-6 flex gap-3">
+                  <div className="mt-6 flex flex-wrap gap-3">
                     <button
                       type="button"
                       onClick={openWorkspace}
@@ -594,7 +594,7 @@ export default function App() {
 
         {sitePage === "about" && (
           <div className="page-transition">
-            <section className="bg-white/80 border border-sky-100 rounded-3xl p-8 md:p-10 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
+            <section className="bg-white/80 border border-sky-100 rounded-3xl p-6 md:p-10 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
               <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">About Stellanet</h2>
               <p className="mt-4 text-slate-600 leading-relaxed max-w-3xl">
                 Stellanet is an AI-assisted academic outreach platform designed to help students
@@ -621,7 +621,7 @@ export default function App() {
 
         {sitePage === "signin" && (
           <div className="page-transition">
-            <section className="max-w-xl mx-auto bg-white/85 border border-sky-100 rounded-3xl p-8 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
+            <section className="max-w-xl mx-auto bg-white/85 border border-sky-100 rounded-3xl p-5 md:p-8 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)]">
               <h2 className="text-2xl font-semibold text-slate-900">
                 {authMode === "signup" && "Create Account"}
                 {authMode === "signin" && "Sign In"}
@@ -807,9 +807,6 @@ export default function App() {
                       Back to sign in
                     </button>
                   )}
-                </div>
-                <div className="text-xs text-slate-500 text-center">
-                  Passwords are hashed securely. Configure SMTP env vars to deliver real emails.
                 </div>
               </div>
             </section>
