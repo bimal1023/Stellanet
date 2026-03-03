@@ -1,24 +1,59 @@
 # Stellanet
 
-Stellanet is an AI-powered academic outreach platform that helps students find relevant faculty and prepare personalized outreach drafts with confidence.
+Stellanet helps students and early researchers find the right professors faster and send better outreach emails.
+It combines research discovery, fit scoring, and AI-assisted drafting in one workflow.
 
-## What It Does
+## What Stellanet Does Today
 
-- Discovers faculty candidates from research signals
-- Ranks matches with trust-focused evidence
-- Shows recent-paper context and match breakdowns
-- Generates editable outreach drafts with rewrite controls
-- Surfaces professor contact email when available (verified/likely)
+- Finds professor candidates from real publication and affiliation signals.
+- Ranks matches by your research interest and profile context.
+- Shows trust-focused details: why-match bullets, score breakdowns, and recent paper snippets.
+- Includes professor contact email when available (verified or likely-inferred).
+- Generates editable outreach drafts and supports rewrite actions by tone/goal.
+- Supports account flows (signup, verify email, sign in, password reset).
+
+## What I Am Building Next
+
+Stellanet is being built toward a full academic networking and outreach copilot.
+
+Planned direction:
+
+- Better ranking quality with stronger relevance and recency controls.
+- More reliable contact enrichment and transparent confidence signals.
+- Saved projects/workspaces so users can manage outreach campaigns over time.
+- Draft history/versioning and higher-quality personalization controls.
+- Team or advisor review workflow before sending.
+- Production-grade monitoring, testing, and quality guardrails.
+
+## Who Can Use Stellanet
+
+- Undergraduate students looking for research opportunities.
+- Master’s and PhD applicants preparing targeted faculty outreach.
+- Current grad students seeking collaborators or lab transitions.
+- Career changers entering research-heavy domains.
+- Advisors/mentors helping students run structured outreach.
+
+## Why This Matters
+
+Most students waste time sending generic emails to poorly matched professors.
+Stellanet is designed to make outreach more focused, evidence-based, and respectful of faculty time.
 
 ## Project Structure
 
-- `frontend/Stellanet` — React + Vite frontend
-- `backend` — FastAPI backend, OpenAlex retrieval, ranking/rewrite pipeline
-- `DEPLOYMENT.md` — deployment guide (Render + Vercel)
+- `frontend/Stellanet` - React + Vite frontend.
+- `backend` - FastAPI backend, OpenAlex retrieval, ranking, rewrite, and auth APIs.
+- `DEPLOYMENT.md` - deployment notes for Render + Vercel.
 
 ## Local Development
 
-### 1) Backend
+Create local env files from examples:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/Stellanet/.env.example frontend/Stellanet/.env
+```
+
+### 1) Start backend
 
 ```bash
 cd backend
@@ -26,7 +61,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 2) Frontend
+### 2) Start frontend
 
 ```bash
 cd frontend/Stellanet
@@ -34,12 +69,5 @@ npm install
 npm run dev
 ```
 
-Set `VITE_API_BASE_URL` in frontend `.env` to your backend URL, e.g.:
+Then update the copied `.env` files with your own keys (AWS/email/database) as needed.
 
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Deployment
-
-Follow `DEPLOYMENT.md` for production hosting steps.

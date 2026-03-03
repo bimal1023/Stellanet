@@ -2,130 +2,14 @@ import { useEffect, useState } from "react";
 import Setup from "./pages/Setup";
 import Results from "./pages/Results";
 import Draft from "./pages/Draft";
+import stellanetLogo from "./assets/stellanet-logo.png";
+import { Badge, DiscoveryLoadingOverlay, StartupFooter } from "./components/AppShellParts";
+import { authSignout, authSubmit, fetchCurrentUser } from "./services/authApi";
+import { discoverProfessors } from "./services/discoveryApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const AUTH_TOKEN_KEY = "stellanet_auth_token";
 const LEGACY_AUTH_TOKEN_KEY = "nm_auth_token";
-
-function Badge({ children, tone = "neutral" }) {
-  const styles = {
-    neutral: "bg-sky-50/90 text-sky-700 border-sky-200/70",
-    info: "bg-cyan-50/90 text-cyan-700 border-cyan-200/70",
-  };
-  return (
-    <span className={`text-xs border px-3 py-1 rounded-full ${styles[tone]}`}>
-      {children}
-    </span>
-  );
-}
-
-function NavItem({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "w-full text-left text-sm px-1 py-2 transition border-l-2",
-        active
-          ? "border-sky-600 text-slate-900 font-medium"
-          : "border-transparent text-slate-600 hover:text-slate-900 hover:border-sky-300",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function DiscoveryLoadingOverlay({ show, message, step }) {
-  if (!show) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 bg-sky-950/25 backdrop-blur-[2px] flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl border border-sky-200/60 bg-white/90 shadow-[0_20px_70px_-25px_rgba(14,116,144,0.45)] p-6 md:p-7">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-sky-100 flex items-center justify-center">
-            <div className="h-5 w-5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-          <div>
-            <div className="text-slate-900 font-semibold">Discovering your matches</div>
-            <div className="text-xs text-slate-500">Step {step}/3</div>
-          </div>
-        </div>
-
-        <div className="mt-5 h-2 rounded-full bg-sky-100 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, 20 + step * 26)}%` }}
-          />
-        </div>
-
-        <div className="mt-4 min-h-[44px] rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-700 transition-all duration-300">
-          {message}
-          <span className="inline-flex ml-1 gap-1 align-middle">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:0ms]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:300ms]" />
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StartupFooter({ onNav }) {
-  return (
-    <footer className="mt-14 border-t border-sky-100/90 pt-8">
-      <div className="rounded-2xl border border-sky-100 bg-white/65 backdrop-blur p-6 md:p-8 shadow-[0_20px_40px_-30px_rgba(14,116,144,0.25)]">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center font-semibold">
-                S
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Stellanet</div>
-                <div className="text-xs text-slate-500">AI-powered research outreach platform</div>
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-slate-600 max-w-md leading-relaxed">
-              Built to help students and aspiring researchers connect with the right labs faster,
-              with strong matching and polished outreach workflows.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Product</div>
-            <div className="mt-3 space-y-2 text-sm">
-              <button type="button" onClick={() => onNav("home")} className="block text-slate-700 hover:text-slate-900">
-                Home
-              </button>
-              <button type="button" onClick={() => onNav("about")} className="block text-slate-700 hover:text-slate-900">
-                About
-              </button>
-              <button type="button" onClick={() => onNav("app")} className="block text-slate-700 hover:text-slate-900">
-                Workspace
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Company</div>
-            <div className="mt-3 space-y-2 text-sm text-slate-700">
-              <div>Security-first workflow</div>
-              <div>Human-in-the-loop drafts</div>
-              <div>Startup MVP build</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 pt-4 border-t border-sky-100 text-xs text-slate-500 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-0 justify-between">
-          <span>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
-          <span>Made for modern research outreach.</span>
-        </div>
-      </div>
-    </footer>
-  );
-}
 
 export default function App() {
   const [sitePage, setSitePage] = useState("home"); // home | about | signin | app
@@ -182,16 +66,10 @@ export default function App() {
     }
 
     let cancelled = false;
-    fetch(`${API_BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Session expired");
-        return res.json();
-      })
-      .then((data) => {
+    fetchCurrentUser(API_BASE, authToken)
+      .then((user) => {
         if (!cancelled) {
-          setCurrentUser(data?.user || null);
+          setCurrentUser(user);
         }
       })
       .catch(() => {
@@ -238,22 +116,8 @@ export default function App() {
     setLoadingStep(1);
     try {
       setPayload(p);
-  
-      const res = await fetch(`${API_BASE}/discover`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(p),
-      });
-  
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Request failed");
-      }
-  
-      const data = await res.json();
-  
-      // backend returns { results: [...] }
-      setResults(data.results || []);
+      const discovered = await discoverProfessors(API_BASE, p);
+      setResults(discovered);
       setDraft(null);
       setView("results");
     } catch (err) {
@@ -287,7 +151,6 @@ export default function App() {
     const verificationToken = authForm.verification_token.trim();
     const resetToken = authForm.reset_token.trim();
     const newPassword = authForm.new_password;
-    const rememberMe = !!authForm.remember_me;
 
     if (authMode === "signup" && (!email || !password || !fullName)) {
       setAuthError("Please fill all required fields.");
@@ -312,35 +175,7 @@ export default function App() {
 
     setAuthBusy(true);
     try {
-      let endpoint = "";
-      let payload = {};
-      if (authMode === "signup") {
-        endpoint = "/auth/signup";
-        payload = { full_name: fullName, email, password, remember_me: rememberMe };
-      } else if (authMode === "signin") {
-        endpoint = "/auth/signin";
-        payload = { email, password, remember_me: rememberMe };
-      } else if (authMode === "verify") {
-        endpoint = "/auth/verify-email";
-        payload = { email, verification_token: verificationToken };
-      } else if (authMode === "forgot") {
-        endpoint = "/auth/forgot-password";
-        payload = { email };
-      } else if (authMode === "reset") {
-        endpoint = "/auth/reset-password";
-        payload = { reset_token: resetToken, new_password: newPassword };
-      }
-
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data?.detail || "Authentication failed");
-      }
+      const data = await authSubmit(API_BASE, authMode, authForm);
 
       if (authMode === "signup") {
         const verifyToken = data?.verification_token || "";
@@ -389,12 +224,7 @@ export default function App() {
 
   const handleSignOut = async () => {
     try {
-      if (authToken) {
-        await fetch(`${API_BASE}/auth/signout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-      }
+      await authSignout(API_BASE, authToken);
     } catch (err) {
       console.error(err);
     } finally {
@@ -452,9 +282,11 @@ export default function App() {
         <header className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 bg-white/72 backdrop-blur-xl border border-sky-100/90 rounded-2xl px-4 py-3 shadow-[0_15px_35px_-20px_rgba(14,116,144,0.25)]">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center font-semibold">
-                S
-              </div>
+              <img
+                src={stellanetLogo}
+                alt="Stellanet logo"
+                className="h-10 w-10 rounded-xl object-cover shadow-sm"
+              />
               <div>
                   <div className="text-sm font-semibold text-slate-900">Stellanet</div>
                 <div className="text-[11px] text-slate-500">Research outreach assistant</div>
@@ -835,7 +667,10 @@ export default function App() {
           </div>
         )}
 
-        <StartupFooter onNav={(target) => (target === "app" ? openWorkspace() : setSitePage(target))} />
+        <StartupFooter
+          onNav={(target) => (target === "app" ? openWorkspace() : setSitePage(target))}
+          logoSrc={stellanetLogo}
+        />
       </div>
     </div>
   );

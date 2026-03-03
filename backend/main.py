@@ -26,7 +26,8 @@ from mailer import email_enabled, send_verification_email, send_password_reset_e
 app = FastAPI()
 init_auth_db()
 logger = logging.getLogger("stellanet.auth")
-AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "true").strip().lower() == "true"
+# Safer default for production; enable only when explicitly needed.
+AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "false").strip().lower() == "true"
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 
