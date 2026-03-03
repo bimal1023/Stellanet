@@ -22,3 +22,6 @@ frontend/Stellanet/dist/
 # IDE cache
 .idea/
 .vscode/
+
+# Local backup virtualenv
+backend/venv_broken_backup
