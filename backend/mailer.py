@@ -22,6 +22,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 FRONTEND_URLS = os.getenv("FRONTEND_URLS", "").strip()
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 RESEND_FROM = os.getenv("RESEND_FROM", SMTP_FROM).strip()
+CONTACT_TO_EMAIL = os.getenv("CONTACT_TO_EMAIL", "").strip()
 RESEND_API_BASE = "https://api.resend.com/emails"
 
 
@@ -64,7 +65,10 @@ def _send_email_via_resend(*, to_email: str, subject: str, text_body: str) -> No
         "subject": subject,
         "text": text_body,
     }
-    response = requests.post(RESEND_API_BASE, headers=headers, json=payload, timeout=20)
+    # Ignore shell/system proxy env vars; they can break Resend in local dev.
+    with requests.Session() as session:
+        session.trust_env = False
+        response = session.post(RESEND_API_BASE, headers=headers, json=payload, timeout=20)
     response.raise_for_status()
 
 
@@ -149,3 +153,21 @@ def send_password_reset_email(*, to_email: str, reset_token: str) -> None:
         subject="Reset your password",
         text_body=text,
     )
+
+
+def send_contact_message(*, first_name: str, last_name: str, from_email: str, message: str) -> None:
+    """Send contact form submission to configured inbox."""
+    to_email = CONTACT_TO_EMAIL or RESEND_FROM or SMTP_FROM
+    if not to_email:
+        raise ValueError("CONTACT_TO_EMAIL is not configured")
+
+    sender_name = " ".join([first_name.strip(), last_name.strip()]).strip() or "Website visitor"
+    subject = f"New Stellanet contact form message from {sender_name}"
+    body = (
+        "You received a new contact message from Stellanet website.\n\n"
+        f"Name: {sender_name}\n"
+        f"Email: {from_email.strip()}\n\n"
+        "Message:\n"
+        f"{message.strip()}\n"
+    )
+    _send_email(to_email=to_email, subject=subject, text_body=body)

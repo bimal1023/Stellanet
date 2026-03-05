@@ -1,34 +1,34 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap");
 
-/* Mossy + mellow palette overrides (Tailwind v4 theme tokens) */
+/* Modern SaaS green palette overrides (Tailwind v4 theme tokens) */
 @theme {
-  --color-sky-50: #fbf7ef;
-  --color-sky-100: #f2e8d8;
-  --color-sky-200: #e5d3b5;
-  --color-sky-300: #d3b48a;
-  --color-sky-400: #be9565;
-  --color-sky-500: #a97c4b;
-  --color-sky-600: #946a42;
-  --color-sky-700: #785538;
-  --color-sky-800: #5e4430;
-  --color-sky-900: #4a3628;
-  --color-sky-950: #2b1f17;
+  --color-sky-50: #ecfdf5;
+  --color-sky-100: #d1fae5;
+  --color-sky-200: #a7f3d0;
+  --color-sky-300: #6ee7b7;
+  --color-sky-400: #34d399;
+  --color-sky-500: #10b981; /* Primary Green */
+  --color-sky-600: #059669; /* Hover Green */
+  --color-sky-700: #047857;
+  --color-sky-800: #065f46;
+  --color-sky-900: #064e3b; /* Dark Green */
+  --color-sky-950: #022c22;
 
-  --color-cyan-50: #f8f3ea;
-  --color-cyan-100: #eee3d1;
-  --color-cyan-200: #dcc8aa;
-  --color-cyan-300: #c8a880;
-  --color-cyan-400: #b38963;
-  --color-cyan-500: #9d7150;
-  --color-cyan-600: #865f45;
-  --color-cyan-700: #6c4d3a;
-  --color-cyan-800: #543d30;
-  --color-cyan-900: #423025;
-  --color-cyan-950: #2a1f17;
+  --color-cyan-50: #f0fdf4;
+  --color-cyan-100: #dcfce7;
+  --color-cyan-200: #bbf7d0;
+  --color-cyan-300: #86efac;
+  --color-cyan-400: #4ade80;
+  --color-cyan-500: #22c55e;
+  --color-cyan-600: #16a34a;
+  --color-cyan-700: #15803d;
+  --color-cyan-800: #166534;
+  --color-cyan-900: #14532d;
+  --color-cyan-950: #052e16;
 
-  --color-blue-100: #f2e8d8;
-  --color-blue-300: #d3b48a;
+  --color-blue-100: #d1fae5;
+  --color-blue-300: #6ee7b7;
 }
 
 :root {
@@ -39,12 +39,17 @@ html, body {
   height: 100%;
 }
 
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 ::selection {
-  background: rgba(169, 124, 75, 0.28);
+  background: rgba(16, 185, 129, 0.3);
 }
 
 /* Page transition (startup motion curve) */

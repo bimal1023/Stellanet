@@ -8,13 +8,9 @@ const DEFAULT_UNIS = [
 ];
 
 export default function Setup({ onRun, loading = false }) {
-  const [interest, setInterest] = useState(
-    "CNN robustness and data efficiency for remote sensing classification"
-  );
-  const [profile, setProfile] = useState(
-    "Undergraduate CS student with Python/PyTorch experience; seeking summer research opportunities."
-  );
-  const [selectedUnis, setSelectedUnis] = useState(["Columbia University", "NYU"]);
+  const [interest, setInterest] = useState("");
+  const [profile, setProfile] = useState("");
+  const [selectedUnis, setSelectedUnis] = useState([]);
   const [customUni, setCustomUni] = useState("");
 
   const canRun = useMemo(() => {

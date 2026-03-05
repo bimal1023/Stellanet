@@ -1,7 +1,7 @@
 export function Badge({ children, tone = "neutral" }) {
   const styles = {
-    neutral: "bg-sky-50/90 text-sky-700 border-sky-200/70",
-    info: "bg-cyan-50/90 text-cyan-700 border-cyan-200/70",
+    neutral: "bg-sky-100/80 text-sky-800 border-sky-200",
+    info: "bg-cyan-100/80 text-cyan-800 border-cyan-200",
   };
   return (
     <span className={`text-xs border px-3 py-1 rounded-full ${styles[tone]}`}>
@@ -48,45 +48,41 @@ export function DiscoveryLoadingOverlay({ show, message, step }) {
 
 export function StartupFooter({ onNav, logoSrc }) {
   return (
-    <footer className="mt-14 border-t border-sky-100/90 pt-8">
-      <div className="rounded-2xl border border-sky-100 bg-white/65 backdrop-blur p-6 md:p-8 shadow-[0_20px_40px_-30px_rgba(14,116,144,0.25)]">
+    <footer className="mt-0 border-t border-white/20 bg-[#064E3B] p-6 md:p-10">
+      <div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3">
               <img
                 src={logoSrc}
                 alt="Stellanet logo"
-                className="h-9 w-9 rounded-xl object-cover shadow-sm"
+                className="h-14 md:h-16 w-auto object-contain select-none"
               />
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Stellanet</div>
-                <div className="text-xs text-slate-500">AI-powered research outreach platform</div>
-              </div>
             </div>
-            <p className="mt-4 text-sm text-slate-600 max-w-md leading-relaxed">
+            <p className="mt-4 text-sm text-white/85 max-w-md leading-relaxed">
               Built to help students and aspiring researchers connect with the right labs faster,
               with strong matching and polished outreach workflows.
             </p>
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Product</div>
+            <div className="text-xs uppercase tracking-wide text-white/70">Product</div>
             <div className="mt-3 space-y-2 text-sm">
-              <button type="button" onClick={() => onNav("home")} className="block text-slate-700 hover:text-slate-900">
+              <button type="button" onClick={() => onNav("home")} className="block text-white/90 hover:text-white">
                 Home
               </button>
-              <button type="button" onClick={() => onNav("about")} className="block text-slate-700 hover:text-slate-900">
+              <button type="button" onClick={() => onNav("about")} className="block text-white/90 hover:text-white">
                 About
               </button>
-              <button type="button" onClick={() => onNav("app")} className="block text-slate-700 hover:text-slate-900">
+              <button type="button" onClick={() => onNav("app")} className="block text-white/90 hover:text-white">
                 Workspace
               </button>
             </div>
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-slate-500">Company</div>
-            <div className="mt-3 space-y-2 text-sm text-slate-700">
+            <div className="text-xs uppercase tracking-wide text-white/70">Company</div>
+            <div className="mt-3 space-y-2 text-sm text-white/90">
               <div>Security-first workflow</div>
               <div>Human-in-the-loop drafts</div>
               <div>Startup MVP build</div>
@@ -94,7 +90,7 @@ export function StartupFooter({ onNav, logoSrc }) {
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-sky-100 text-xs text-slate-500 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-0 justify-between">
+        <div className="mt-8 pt-4 border-t border-white/20 text-xs text-white/70 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-0 justify-between">
           <span>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
           <span>Made for modern research outreach.</span>
         </div>

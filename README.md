@@ -71,3 +71,5 @@ npm run dev
 
 Then update the copied `.env` files with your own keys (AWS/email/database) as needed.
 
+For contact-form email delivery, set `CONTACT_TO_EMAIL` in `backend/.env`.
+

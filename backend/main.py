@@ -21,7 +21,12 @@ from auth_store import (
     issue_password_reset,
     reset_password,
 )
-from mailer import email_enabled, send_verification_email, send_password_reset_email
+from mailer import (
+    email_enabled,
+    send_verification_email,
+    send_password_reset_email,
+    send_contact_message,
+)
 
 app = FastAPI()
 init_auth_db()
@@ -99,6 +104,13 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     reset_token: str
     new_password: str
+
+
+class ContactRequest(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+    email: str
+    message: str
 
 
 def _extract_bearer_token(authorization: str | None) -> str:
@@ -313,3 +325,25 @@ def rewrite_draft(req: RewriteDraftRequest):
     except Exception:
         # Safe fallback: return original draft instead of 500.
         return {"subject": req.subject, "body": req.body}
+
+
+@app.post("/contact")
+def contact(req: ContactRequest):
+    email = (req.email or "").strip()
+    message = (req.message or "").strip()
+    if "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if len(message) < 3:
+        raise HTTPException(status_code=400, detail="Message is too short")
+
+    try:
+        send_contact_message(
+            first_name=req.first_name or "",
+            last_name=req.last_name or "",
+            from_email=email,
+            message=message,
+        )
+        return {"ok": True, "message": "Thanks for reaching out. We will get back to you soon."}
+    except Exception:
+        logger.exception("Contact form email delivery failed for %s", email)
+        raise HTTPException(status_code=500, detail="Could not deliver message right now")
