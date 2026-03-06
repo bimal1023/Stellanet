@@ -171,6 +171,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (sitePage !== "app") return;
+    if (view === "draft" && !draft) {
+      setView((results || []).length > 0 ? "results" : "setup");
+      return;
+    }
+    if (view === "results" && (results || []).length === 0) {
+      setView("setup");
+    }
+  }, [sitePage, view, draft, results]);
+
+  useEffect(() => {
     if (sitePage === "notfound") return;
     const targetPath = buildPathForState(sitePage, view);
     const currentPath = (window.location.pathname || "/").replace(/\/+$/, "") || "/";

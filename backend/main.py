@@ -269,6 +269,7 @@ def discover(req: DiscoverRequest):
             filters=filters,
         )
     except Exception:
+        logger.exception("OpenAlex candidate retrieval failed")
         candidates = []
 
     # 2) Stellanet ranks + drafts (grounded)
@@ -281,6 +282,7 @@ def discover(req: DiscoverRequest):
                 top_k=8
             )
         except Exception:
+            logger.exception("Nova ranking/drafting failed; will try OpenAlex fallback build_results")
             results = []
 
     # 3) Safe fallback for smoother UX (never return 500 for discover failures)
@@ -294,6 +296,7 @@ def discover(req: DiscoverRequest):
                 filters=filters,
             )
         except Exception:
+            logger.exception("OpenAlex fallback build_results failed")
             results = []
 
     if not results:
@@ -326,6 +329,7 @@ def discover(req: DiscoverRequest):
             filters=filters,
         )
     except Exception:
+        logger.exception("Result enrichment failed; returning non-enriched results")
         enriched = results
     return {"results": enriched}
 
