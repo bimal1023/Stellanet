@@ -51,3 +51,10 @@ export async function authSignout(apiBase, token) {
   if (!token) return { ok: true };
   return apiRequest(apiBase, "/auth/signout", { method: "POST", token });
 }
+
+export async function authOAuthSignIn(apiBase, provider, idToken, rememberMe = true) {
+  return apiRequest(apiBase, "/auth/oauth-signin", {
+    method: "POST",
+    body: { provider, id_token: idToken, remember_me: !!rememberMe },
+  });
+}

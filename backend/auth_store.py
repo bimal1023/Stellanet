@@ -158,6 +158,13 @@ def _user_public_dict(row: dict) -> dict:
     }
 
 
+def _build_password_record(password: str) -> tuple[str, str]:
+    salt = os.urandom(16)
+    salt_b64 = base64.b64encode(salt).decode("utf-8")
+    pwd_hash = _hash_password(password, salt_b64)
+    return salt_b64, pwd_hash
+
+
 def _generate_token() -> str:
     return secrets.token_urlsafe(32)
 
@@ -172,9 +179,7 @@ def create_user(full_name: str, email: str, password: str) -> tuple[dict, str]:
     if len(password or "") < 8:
         raise ValueError("Password must be at least 8 characters")
 
-    salt = os.urandom(16)
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-    pwd_hash = _hash_password(password, salt_b64)
+    salt_b64, pwd_hash = _build_password_record(password)
     verify_token = _generate_token()
 
     with _LOCK:
@@ -215,6 +220,63 @@ def create_user(full_name: str, email: str, password: str) -> tuple[dict, str]:
             # sqlite and postgres use different exception classes
             msg = str(exc).lower()
             if "unique" in msg or "duplicate key" in msg:
+                raise ValueError("Email already exists") from exc
+            raise
+        finally:
+            conn.close()
+
+
+def create_or_get_oauth_user(full_name: str, email: str) -> dict:
+    email_n = _normalize_email(email)
+    if "@" not in email_n:
+        raise ValueError("A valid email is required")
+    full_name_n = (full_name or "").strip() or email_n.split("@")[0]
+
+    with _LOCK:
+        conn = _conn()
+        try:
+            row = _fetchone(conn, "SELECT * FROM users WHERE email = ?", (email_n,))
+            if row:
+                return _user_public_dict(row)
+
+            salt_b64, pwd_hash = _build_password_record(secrets.token_urlsafe(24))
+            created_at = _utcnow_iso()
+            if IS_POSTGRES:
+                cur = _execute(
+                    conn,
+                    """
+                    INSERT INTO users (
+                        full_name, email, password_salt, password_hash,
+                        is_verified, verification_token, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    RETURNING id
+                    """,
+                    (full_name_n, email_n, salt_b64, pwd_hash, True, None, created_at),
+                )
+                user_id = int(cur.fetchone()["id"])
+            else:
+                cur = _execute(
+                    conn,
+                    """
+                    INSERT INTO users (
+                        full_name, email, password_salt, password_hash,
+                        is_verified, verification_token, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (full_name_n, email_n, salt_b64, pwd_hash, 1, None, created_at),
+                )
+                user_id = int(cur.lastrowid)
+            conn.commit()
+            row = _fetchone(conn, "SELECT * FROM users WHERE id = ?", (user_id,))
+            return _user_public_dict(row)
+        except Exception as exc:
+            msg = str(exc).lower()
+            if "unique" in msg or "duplicate key" in msg:
+                row = _fetchone(conn, "SELECT * FROM users WHERE email = ?", (email_n,))
+                if row:
+                    return _user_public_dict(row)
                 raise ValueError("Email already exists") from exc
             raise
         finally:

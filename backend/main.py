@@ -15,12 +15,14 @@ from auth_store import (
     create_user,
     authenticate_user,
     create_session,
+    create_or_get_oauth_user,
     get_user_by_token,
     delete_session,
     verify_email,
     issue_password_reset,
     reset_password,
 )
+from oauth_verifier import verify_oauth_id_token
 from mailer import (
     email_enabled,
     send_verification_email,
@@ -90,6 +92,12 @@ class SignInRequest(BaseModel):
     email: str
     password: str
     remember_me: bool = False
+
+
+class OAuthSignInRequest(BaseModel):
+    provider: str
+    id_token: str
+    remember_me: bool = True
 
 
 class VerifyEmailRequest(BaseModel):
@@ -169,6 +177,22 @@ def auth_signin(req: SignInRequest):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     if auth_error == "email_not_verified":
         raise HTTPException(status_code=403, detail="Email not verified")
+    session_days = 30 if req.remember_me else 7
+    token = create_session(user["id"], days_valid=session_days)
+    return {"token": token, "user": user}
+
+
+@app.post("/auth/oauth-signin")
+def auth_oauth_signin(req: OAuthSignInRequest):
+    try:
+        identity = verify_oauth_id_token(req.provider, req.id_token)
+        user = create_or_get_oauth_user(identity["full_name"], identity["email"])
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception:
+        logger.exception("OAuth sign-in failed for provider=%s", req.provider)
+        raise HTTPException(status_code=500, detail="OAuth sign-in failed")
+
     session_days = 30 if req.remember_me else 7
     token = create_session(user["id"], days_valid=session_days)
     return {"token": token, "user": user}

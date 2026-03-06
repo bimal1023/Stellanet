@@ -8,16 +8,57 @@ import AppHeader from "./components/AppHeader";
 import HomeSections from "./components/HomeSections";
 import AboutSection from "./components/AboutSection";
 import AuthSection from "./components/AuthSection";
-import { authSignout, authSubmit, fetchCurrentUser } from "./services/authApi";
+import {
+  authOAuthSignIn,
+  authSignout,
+  authSubmit,
+  fetchCurrentUser,
+} from "./services/authApi";
 import { discoverProfessors } from "./services/discoveryApi";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const AUTH_TOKEN_KEY = "stellanet_auth_token";
 const LEGACY_AUTH_TOKEN_KEY = "nm_auth_token";
 
+function resolveRouteFromPath(pathname) {
+  const cleanPath = (pathname || "/").replace(/\/+$/, "") || "/";
+  if (cleanPath === "/" || cleanPath === "/home") {
+    return { sitePage: "home", view: "setup", notFoundPath: "" };
+  }
+  if (cleanPath === "/about") {
+    return { sitePage: "about", view: "setup", notFoundPath: "" };
+  }
+  if (cleanPath === "/signin") {
+    return { sitePage: "signin", view: "setup", notFoundPath: "" };
+  }
+  if (cleanPath === "/app" || cleanPath === "/workspace") {
+    return { sitePage: "app", view: "setup", notFoundPath: "" };
+  }
+  if (cleanPath === "/app/results") {
+    return { sitePage: "app", view: "results", notFoundPath: "" };
+  }
+  if (cleanPath === "/app/draft") {
+    return { sitePage: "app", view: "draft", notFoundPath: "" };
+  }
+  return { sitePage: "notfound", view: "setup", notFoundPath: cleanPath };
+}
+
+function buildPathForState(sitePage, view) {
+  if (sitePage === "about") return "/about";
+  if (sitePage === "signin") return "/signin";
+  if (sitePage === "app") {
+    if (view === "results") return "/app/results";
+    if (view === "draft") return "/app/draft";
+    return "/app";
+  }
+  return "/";
+}
+
 export default function App() {
-  const [sitePage, setSitePage] = useState("home"); // home | about | signin | app
-  const [view, setView] = useState("setup"); // setup | results | draft
+  const initialRoute = resolveRouteFromPath(window.location.pathname);
+  const [sitePage, setSitePage] = useState(initialRoute.sitePage); // home | about | signin | app | notfound
+  const [view, setView] = useState(initialRoute.view); // setup | results | draft
+  const [notFoundPath, setNotFoundPath] = useState(initialRoute.notFoundPath || "");
   const [payload, setPayload] = useState(null);
   const [results, setResults] = useState([]);
   const [draft, setDraft] = useState(null);
@@ -36,7 +77,7 @@ export default function App() {
     verification_token: "",
     reset_token: "",
     new_password: "",
-    remember_me: true,
+    remember_me: false,
   });
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -117,6 +158,26 @@ export default function App() {
       if (token) onAuthInput("reset_token", token);
     }
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const nextRoute = resolveRouteFromPath(window.location.pathname);
+      setSitePage(nextRoute.sitePage);
+      setView(nextRoute.view);
+      setNotFoundPath(nextRoute.notFoundPath || "");
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (sitePage === "notfound") return;
+    const targetPath = buildPathForState(sitePage, view);
+    const currentPath = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+    if (currentPath !== targetPath) {
+      window.history.pushState({}, "", targetPath);
+    }
+  }, [sitePage, view]);
 
   const handleRun = async (p) => {
     if (!currentUser) {
@@ -273,7 +334,7 @@ export default function App() {
           verification_token: "",
           reset_token: "",
           new_password: "",
-          remember_me: true,
+          remember_me: false,
         });
         setSitePage("app");
         setView("setup");
@@ -297,6 +358,35 @@ export default function App() {
       setCurrentUser(null);
       setSitePage("home");
       setView("setup");
+    }
+  };
+
+  const handleOAuthSignIn = async (provider, idToken) => {
+    setAuthError("");
+    setAuthInfo("");
+    setAuthBusy(true);
+    try {
+      const data = await authOAuthSignIn(
+        API_BASE,
+        provider,
+        idToken,
+        !!authForm.remember_me
+      );
+      const token = data?.token || "";
+      const user = data?.user || null;
+      if (!token || !user) throw new Error("Invalid OAuth response");
+
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
+      setAuthToken(token);
+      setCurrentUser(user);
+      setSitePage("app");
+      setView("setup");
+      setAuthInfo(`Signed in with ${provider === "apple" ? "Apple" : "Google"} successfully.`);
+    } catch (err) {
+      setAuthError(err?.message || "OAuth sign-in failed");
+    } finally {
+      setAuthBusy(false);
     }
   };
 
@@ -376,7 +466,38 @@ export default function App() {
             setAuthMode={setAuthMode}
             setAuthError={setAuthError}
             setAuthInfo={setAuthInfo}
+            onOAuthSignIn={handleOAuthSignIn}
           />
+        )}
+
+        {sitePage === "notfound" && (
+          <div className="page-transition">
+            <section className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-[0_24px_50px_-35px_rgba(15,23,42,0.3)]">
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400 font-semibold">404</div>
+              <h2 className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+                Page not found
+              </h2>
+              <p className="mt-3 text-slate-600">
+                We could not find <span className="font-medium text-slate-800">{notFoundPath || window.location.pathname}</span>.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSitePage("home")}
+                  className="rounded-xl bg-[#10B981] text-white px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-[#059669] transition"
+                >
+                  Go Home
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSitePage("signin")}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Go to Sign In
+                </button>
+              </div>
+            </section>
+          </div>
         )}
 
         {sitePage === "app" && (
