@@ -3,8 +3,10 @@ export async function apiRequest(apiBase, path, options = {}) {
   const mergedHeaders = { ...headers };
   if (token) mergedHeaders.Authorization = `Bearer ${token}`;
   if (body !== undefined) mergedHeaders["Content-Type"] = "application/json";
+  const base = (apiBase || "").replace(/\/+$/, "");
+  const route = path.startsWith("/") ? path : `/${path}`;
 
-  const response = await fetch(`${apiBase}${path}`, {
+  const response = await fetch(`${base}${route}`, {
     method,
     headers: mergedHeaders,
     body: body !== undefined ? JSON.stringify(body) : undefined,
