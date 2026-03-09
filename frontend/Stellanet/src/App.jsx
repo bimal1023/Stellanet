@@ -16,7 +16,7 @@ import {
 } from "./services/authApi";
 import { discoverProfessors } from "./services/discoveryApi";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 const AUTH_TOKEN_KEY = "stellanet_auth_token";
 const LEGACY_AUTH_TOKEN_KEY = "nm_auth_token";
 
