@@ -2,85 +2,68 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 function Toast({ show, message }) {
   return (
-    <div
-      className={[
-        "fixed top-6 left-1/2 -translate-x-1/2 z-50",
-        "transition-all duration-200",
-        show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
-      ].join(" ")}
-    >
-      <div className="bg-sky-700 text-white text-sm px-4 py-2 rounded-xl shadow-lg border border-sky-500/40">
-        {message}
-      </div>
+    <div style={{
+      position: "fixed",
+      top: 24,
+      left: "50%",
+      transform: `translateX(-50%) translateY(${show ? 0 : -8}px)`,
+      opacity: show ? 1 : 0,
+      pointerEvents: show ? "auto" : "none",
+      zIndex: 50,
+      transition: "opacity 180ms, transform 180ms",
+      background: "var(--surface-2)",
+      border: "1px solid var(--border)",
+      borderLeft: "3px solid var(--gold)",
+      borderRadius: 4,
+      padding: "10px 18px",
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: "0.75rem",
+      letterSpacing: "0.06em",
+      color: "var(--text)",
+      whiteSpace: "nowrap",
+    }}>
+      {message}
     </div>
   );
 }
 
-function IconButton({ children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-xl border border-sky-100 bg-white/80 px-3 py-2 text-sm text-slate-700 hover:border-sky-300 hover:bg-sky-50/70 transition hover:-translate-y-[1px] active:translate-y-0"
-    >
-      {children}
-    </button>
-  );
-}
-
-function PrimaryButton({ children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 text-white px-4 py-2 text-sm font-medium shadow-sm hover:from-sky-500 hover:to-cyan-500 transition hover:-translate-y-[1px] active:translate-y-0"
-    >
-      {children}
-    </button>
-  );
-}
+const TONES = ["Professional", "Friendly", "Short"];
 
 export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000" }) {
   const [subject, setSubject] = useState(draft?.subject || "");
-  const [body, setBody] = useState(draft?.body || "");
-  const [tone, setTone] = useState("Professional");
-  const [rewriting, setRewriting] = useState(false);
+  const [body, setBody]       = useState(draft?.body || "");
+  const [tone, setTone]       = useState("Professional");
+  const [rewriting, setRewriting]             = useState(false);
   const [initialDraftLoading, setInitialDraftLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "" });
   const toneClickCount = useRef({ Professional: 0, Friendly: 0, Short: 0 });
 
-  const preview = useMemo(() => {
-    return `Subject: ${subject}\n\n${body}`;
-  }, [subject, body]);
+  const preview = useMemo(() => `Subject: ${subject}\n\n${body}`, [subject, body]);
 
   const showToast = (message) => {
     setToast({ show: true, message });
     window.clearTimeout(showToast._t);
-    showToast._t = window.setTimeout(() => setToast({ show: false, message: "" }), 1400);
+    showToast._t = window.setTimeout(() => setToast({ show: false, message: "" }), 1600);
   };
 
   const copyText = async (text, label) => {
     try {
       await navigator.clipboard.writeText(text);
-      showToast(`${label} copied ✅`);
+      showToast(`${label} copied`);
     } catch {
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
-      showToast(`${label} copied ✅`);
+      showToast(`${label} copied`);
     }
   };
 
   const copyProfessorEmailOnly = async () => {
     const value = (draft?.contact_email || "").trim();
-    if (!value) {
-      showToast("Professor email unavailable");
-      return;
-    }
+    if (!value) { showToast("Professor email unavailable"); return; }
     await copyText(value, "Professor email");
   };
 
@@ -89,10 +72,7 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
     { seedSubject = subject, seedBody = body, showSuccessToast = true, rewriteAttempt = null } = {}
   ) => {
     setTone(nextTone);
-    const currentSubject = seedSubject;
-    const currentBody = seedBody;
     const attempt = rewriteAttempt ?? toneClickCount.current[nextTone];
-
     setRewriting(true);
     try {
       const res = await fetch(`${apiBase}/rewrite-draft`, {
@@ -104,35 +84,24 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
           university: draft?.university || "",
           title: draft?.title || "",
           why: draft?.why || "",
-          subject: currentSubject,
-          body: currentBody,
+          subject: seedSubject,
+          body: seedBody,
           rewrite_attempt: attempt,
         }),
       });
-
-      if (!res.ok) {
-        throw new Error("Tone rewrite failed");
-      }
-
+      if (!res.ok) throw new Error("Tone rewrite failed");
       const data = await res.json();
-      const nextSubject = (data?.subject || currentSubject || "").trim();
-      const nextBody = (data?.body || currentBody || "").trim();
-
-      if (!nextBody) {
-        throw new Error("Tone rewrite returned empty draft");
-      }
-
+      const nextSubject = (data?.subject || seedSubject || "").trim();
+      const nextBody    = (data?.body    || seedBody    || "").trim();
+      if (!nextBody) throw new Error("Tone rewrite returned empty draft");
       setSubject(nextSubject);
       setBody(nextBody);
-      if (showSuccessToast) {
-        showToast(`Rewritten in ${nextTone} tone ✨`);
-      }
+      if (showSuccessToast) showToast(`Rewritten — ${nextTone} tone`);
     } catch (err) {
       console.error(err);
-      // If initial load fails, restore seed content instead of leaving blank editor.
-      setSubject((prev) => prev || currentSubject);
-      setBody((prev) => prev || currentBody);
-      showToast("Could not rewrite now. Keeping current draft.");
+      setSubject(prev => prev || seedSubject);
+      setBody(prev => prev || seedBody);
+      showToast("Rewrite failed — keeping current draft");
     } finally {
       setRewriting(false);
     }
@@ -140,112 +109,121 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
 
   useEffect(() => {
     const initialSubject = draft?.subject || "";
-    const initialBody = draft?.body || "";
-
-    // Prevent template flash: show loading first, then render only model output.
+    const initialBody    = draft?.body    || "";
     setSubject("");
     setBody("");
     setTone("Professional");
     toneClickCount.current = { Professional: 1, Friendly: 0, Short: 0 };
-
     if (!draft) return;
     setInitialDraftLoading(true);
-    // On first open, immediately upgrade to a Stellanet-generated professional draft.
     Promise.resolve(
-      rewriteWithTone("Professional", {
-      seedSubject: initialSubject,
-      seedBody: initialBody,
-      showSuccessToast: false,
-      rewriteAttempt: 1,
-      })
+      rewriteWithTone("Professional", { seedSubject: initialSubject, seedBody: initialBody, showSuccessToast: false, rewriteAttempt: 1 })
     ).finally(() => setInitialDraftLoading(false));
   }, [draft]);
 
   const applyTone = async (nextTone) => {
     toneClickCount.current[nextTone] += 1;
-    await rewriteWithTone(nextTone, {
-      rewriteAttempt: toneClickCount.current[nextTone],
-    });
+    await rewriteWithTone(nextTone, { rewriteAttempt: toneClickCount.current[nextTone] });
   };
 
   if (!draft) {
     return (
-      <div className="bg-white/75 backdrop-blur border border-sky-100 rounded-3xl shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)] p-6 md:p-8">
-        <div className="text-slate-900 font-medium">No draft selected</div>
-        <p className="text-slate-600 text-sm mt-1">
-          Go back to Results and select a professor.
-        </p>
-        <div className="mt-4">
-          <IconButton onClick={onBack}>← Back</IconButton>
+      <div className="page-transition" style={{ maxWidth: 760, margin: "40px auto", padding: "0 24px" }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, padding: "36px 32px" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", color: "var(--text-muted)" }}>No draft selected</div>
+          <p style={{ marginTop: 8, fontSize: "0.8125rem", color: "var(--text-dim)" }}>Go back to Results and select a professor.</p>
+          <button className="btn-ghost" onClick={onBack} style={{ marginTop: 20 }}>← Back to Results</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="page-transition" style={{ maxWidth: 980, margin: "0 auto", padding: "40px 24px" }}>
       <Toast show={toast.show} message={toast.message} />
 
-      <div className="bg-white/70 backdrop-blur border border-slate-200 rounded-3xl shadow-sm p-6 md:p-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Draft Email</h2>
-            <p className="text-slate-600 mt-1">
-              Review and edit. This tool creates drafts only — you decide what to send.
-            </p>
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 32 }}>
+        <div>
+          <span className="label-mono">Workspace — Draft Email</span>
+          <h2 style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: "2.25rem",
+            fontWeight: 400,
+            color: "var(--text)",
+            marginTop: 8,
+            lineHeight: 1.1,
+          }}>
+            {draft.name}
+          </h2>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-sky-700">
-                {draft.university}
-              </span>
-              <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs text-cyan-700">
-                {draft.name}
-              </span>
-              {draft.contact_email ? (
-                <div className="inline-flex items-center gap-2">
-                  <a
-                    href={`mailto:${draft.contact_email}`}
-                    className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700 hover:bg-emerald-100/70 transition"
-                  >
-                    {draft.contact_email}
-                  </a>
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                      draft.contact_email_source === "openalex"
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : "border-amber-200 bg-amber-50 text-amber-700",
-                    ].join(" ")}
-                  >
-                    {draft.contact_email_source === "openalex" ? "verified" : "likely"}
-                  </span>
-                </div>
-              ) : (
-                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
-                  Email unavailable
+          {/* Context tags */}
+          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.6875rem", letterSpacing: "0.08em",
+              color: "var(--text-dim)", background: "var(--surface-2)",
+              border: "1px solid var(--border-sub)", padding: "3px 10px", borderRadius: 2,
+            }}>
+              {draft.university}
+            </span>
+            {draft.contact_email ? (
+              <>
+                <a
+                  href={`mailto:${draft.contact_email}`}
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6875rem",
+                    letterSpacing: "0.04em", color: "var(--green)",
+                    background: "var(--green-bg)", border: "1px solid rgba(82,224,124,0.2)",
+                    padding: "3px 10px", borderRadius: 2, textDecoration: "none",
+                  }}
+                >
+                  {draft.contact_email}
+                </a>
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: "0.55rem",
+                  letterSpacing: "0.12em", textTransform: "uppercase",
+                  color: draft.contact_email_source === "openalex" ? "var(--green)" : "var(--amber)",
+                  opacity: 0.8,
+                }}>
+                  {draft.contact_email_source === "openalex" ? "verified" : "likely"}
                 </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <IconButton onClick={onBack}>← Back</IconButton>
-            <IconButton onClick={() => copyText(subject, "Subject")}>Copy subject</IconButton>
-            <PrimaryButton onClick={copyProfessorEmailOnly}>Copy email</PrimaryButton>
+              </>
+            ) : (
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6875rem",
+                color: "var(--amber)", background: "var(--amber-bg)",
+                border: "1px solid rgba(245,166,35,0.2)", padding: "3px 10px", borderRadius: 2,
+              }}>
+                Email unavailable
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-1">
-            <label className="text-sm font-medium text-slate-800">Tone</label>
-            <p className="text-xs text-slate-500 mt-1">
-              Click any option to rewrite with Stellanet.
-            </p>
+        {/* Action buttons */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn-ghost"    onClick={onBack}>← Back</button>
+          <button className="btn-ghost"    onClick={() => copyText(subject, "Subject")}>Copy subject</button>
+          <button className="btn-primary"  onClick={copyProfessorEmailOnly}>Copy email</button>
+        </div>
+      </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {["Professional", "Friendly", "Short"].map((t) => {
+      {/* Main grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 16, alignItems: "start" }}>
+
+        {/* Left sidebar — tone controls */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+          <div style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border-sub)",
+            borderRadius: 4,
+            padding: "20px 18px",
+          }}>
+            <div className="label-mono" style={{ marginBottom: 14 }}>Tone</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {TONES.map(t => {
                 const active = tone === t;
                 return (
                   <button
@@ -253,79 +231,123 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
                     type="button"
                     onClick={() => applyTone(t)}
                     disabled={rewriting}
-                    className={[
-                      "rounded-xl border px-3 py-2 text-xs font-medium transition",
-                      rewriting ? "opacity-70 cursor-wait" : "",
-                      active
-                        ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white border-sky-600 shadow-sm"
-                        : "bg-white/70 text-slate-700 border-sky-100 hover:border-sky-300 hover:bg-sky-50/70",
-                    ].join(" ")}
+                    style={{
+                      background: active ? "var(--gold)" : "transparent",
+                      color: active ? "var(--bg)" : "var(--text-muted)",
+                      border: `1px solid ${active ? "var(--gold)" : "var(--border-sub)"}`,
+                      borderRadius: 3,
+                      padding: "8px 14px",
+                      fontSize: "0.8125rem",
+                      fontFamily: "'Instrument Sans', sans-serif",
+                      fontWeight: active ? 600 : 400,
+                      cursor: rewriting ? "wait" : "pointer",
+                      opacity: rewriting && !active ? 0.5 : 1,
+                      transition: "all 150ms",
+                      textAlign: "left",
+                    }}
                   >
-                    {rewriting && active ? `${t}...` : t}
+                    {rewriting && active ? `${t}…` : t}
                   </button>
                 );
               })}
             </div>
-
-            <div className="mt-4 rounded-2xl border border-dashed border-sky-200 bg-sky-50/60 p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-500">
-                Tips
-              </div>
-              <ul className="mt-2 text-sm text-slate-600 space-y-2">
-                <li>• Add 1 personal line about their recent work.</li>
-                <li>• Keep it short — professors scan quickly.</li>
-                <li>• Include your availability + resume link.</li>
-              </ul>
-            </div>
+            <p style={{ marginTop: 12, fontSize: "0.7rem", color: "var(--text-dim)", lineHeight: 1.6 }}>
+              Click any tone to rewrite the draft with Stellanet.
+            </p>
           </div>
 
-          {/* Editor */}
-          <div className="md:col-span-2">
-            <div className="rounded-2xl border border-sky-100 bg-white/80 p-4 md:p-5 shadow-sm">
-              {initialDraftLoading && !subject && !body ? (
-                <div className="min-h-[360px] flex flex-col items-center justify-center rounded-xl border border-sky-100 bg-sky-50/60 text-center px-6">
-                  <div className="h-8 w-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
-                  <div className="mt-4 text-slate-900 font-medium">Generating your draft with Stellanet</div>
-                  <div className="mt-1 text-sm text-slate-600">
-                    Crafting a high-quality {tone.toLowerCase()} version for this professor...
-                  </div>
+          {/* Tips */}
+          <div style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border-sub)",
+            borderRadius: 4,
+            padding: "16px 18px",
+          }}>
+            <div className="label-mono" style={{ marginBottom: 10 }}>Tips</div>
+            <ul style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                "Reference one recent paper by name.",
+                "Keep body under 200 words.",
+                "Include your availability and a resume link.",
+              ].map((tip, i) => (
+                <li key={i} style={{ display: "flex", gap: 7, fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.55 }}>
+                  <span style={{ color: "var(--gold)", flexShrink: 0, marginTop: 1 }}>›</span>
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right — editor */}
+        <div style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border-sub)",
+          borderRadius: 4,
+          padding: "24px",
+        }}>
+          {(initialDraftLoading && !subject && !body) ? (
+            <div style={{
+              minHeight: 380,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 16,
+            }}>
+              <div style={{
+                width: 32, height: 32,
+                border: "2px solid var(--gold)",
+                borderTopColor: "transparent",
+                borderRadius: "50%",
+              }} className="spin" />
+              <div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.25rem", fontWeight: 400, color: "var(--text)", textAlign: "center" }}>
+                  Generating your draft
                 </div>
-              ) : (
-                <>
-              <label className="text-sm font-medium text-slate-800">Subject</label>
+                <div style={{ marginTop: 6, fontSize: "0.8125rem", color: "var(--text-dim)", textAlign: "center" }}>
+                  Crafting a high-quality {tone.toLowerCase()} version…
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="label-mono" style={{ display: "block", marginBottom: 8 }}>Subject</label>
               <input
+                className="input-base"
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-sky-100 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-500/30"
+                onChange={e => setSubject(e.target.value)}
                 placeholder="Email subject"
               />
 
-              <label className="text-sm font-medium text-slate-800 mt-4 block">
-                Email body
-              </label>
+              <label className="label-mono" style={{ display: "block", marginTop: 20, marginBottom: 8 }}>Email Body</label>
               <textarea
+                className="input-base"
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={14}
-                className="mt-2 w-full rounded-xl border border-sky-100 bg-white px-3 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-sky-500/30"
-                placeholder="Draft email body..."
+                onChange={e => setBody(e.target.value)}
+                rows={16}
+                placeholder="Draft email body…"
+                style={{ resize: "vertical", lineHeight: 1.7 }}
               />
 
-              <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div className="text-xs text-slate-500">
-                  Tone: <span className="font-medium text-slate-700">{tone}</span> •
-                  {rewriting ? "Rewriting with Stellanet..." : "Draft-only, human review required."}
-                </div>
-
-                <div className="flex gap-2">
-                  <IconButton onClick={() => copyText(body, "Body")}>Copy body</IconButton>
-                  <PrimaryButton onClick={copyProfessorEmailOnly}>Copy email</PrimaryButton>
+              <div style={{
+                marginTop: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+              }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)" }}>
+                  {rewriting ? `Rewriting · ${tone}…` : `Tone: ${tone} · Draft only — human review required`}
+                </span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="btn-ghost"   onClick={() => copyText(body, "Body")}        style={{ fontSize: "0.8rem" }}>Copy body</button>
+                  <button className="btn-primary"  onClick={copyProfessorEmailOnly}              style={{ fontSize: "0.8rem" }}>Copy email</button>
                 </div>
               </div>
-                </>
-              )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
