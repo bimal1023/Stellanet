@@ -1,10 +1,10 @@
 export function Badge({ children, tone = "neutral" }) {
   const styles = {
-    neutral: "bg-sky-100/80 text-sky-800 border-sky-200",
-    info: "bg-cyan-100/80 text-cyan-800 border-cyan-200",
+    neutral: { background: "var(--gold-bg)", color: "var(--gold)", border: "1px solid var(--border)" },
+    info:    { background: "var(--green-bg)", color: "var(--green)", border: "1px solid rgba(82,224,124,0.2)" },
   };
   return (
-    <span className={`text-xs border px-3 py-1 rounded-full ${styles[tone]}`}>
+    <span style={{ ...styles[tone], fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "2px", display: "inline-flex", alignItems: "center" }}>
       {children}
     </span>
   );
@@ -12,33 +12,29 @@ export function Badge({ children, tone = "neutral" }) {
 
 export function DiscoveryLoadingOverlay({ show, message, step }) {
   if (!show) return null;
-
+  const pct = Math.min(100, 18 + step * 27);
   return (
-    <div className="fixed inset-0 z-50 bg-sky-950/25 backdrop-blur-[2px] flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl border border-sky-200/60 bg-white/90 shadow-[0_20px_70px_-25px_rgba(14,116,144,0.45)] p-6 md:p-7">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-sky-100 flex items-center justify-center">
-            <div className="h-5 w-5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(12, 11, 9, 0.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div style={{ width: "100%", maxWidth: 420, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", padding: "32px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "4px", background: "var(--gold-bg)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: 16, height: 16, border: "2px solid var(--gold)", borderTopColor: "transparent", borderRadius: "50%" }} className="spin" />
           </div>
           <div>
-            <div className="text-slate-900 font-semibold">Discovering your matches</div>
-            <div className="text-xs text-slate-500">Step {step}/3</div>
+            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text)" }}>Discovering your matches</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)", marginTop: 2 }}>Step {step} of 3</div>
           </div>
         </div>
-
-        <div className="mt-5 h-2 rounded-full bg-sky-100 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, 20 + step * 26)}%` }}
-          />
+        <div style={{ marginTop: 20, height: "2px", background: "var(--border-sub)", borderRadius: "1px", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${pct}%`, background: "var(--gold)", borderRadius: "1px", transition: "width 500ms cubic-bezier(0.16,1,0.3,1)" }} />
         </div>
-
-        <div className="mt-4 min-h-[44px] rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-700 transition-all duration-300">
+        <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--surface-2)", border: "1px solid var(--border-sub)", borderRadius: "4px", fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8, minHeight: 44 }}>
+          <span style={{ color: "var(--gold)", flexShrink: 0 }}>›</span>
           {message}
-          <span className="inline-flex ml-1 gap-1 align-middle">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:0ms]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-bounce [animation-delay:300ms]" />
+          <span style={{ display: "inline-flex", gap: 3, marginLeft: 4 }}>
+            {[0, 150, 300].map(delay => (
+              <span key={delay} style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold)", display: "inline-block", animation: `fadeIn 0.6s ${delay}ms ease-in-out infinite alternate` }} />
+            ))}
           </span>
         </div>
       </div>
@@ -48,51 +44,39 @@ export function DiscoveryLoadingOverlay({ show, message, step }) {
 
 export function StartupFooter({ onNav, logoSrc }) {
   return (
-    <footer className="mt-0 border-t border-white/20 bg-[#064E3B] p-6 md:p-10">
-      <div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3">
-              <img
-                src={logoSrc}
-                alt="Stellanet logo"
-                className="h-14 md:h-16 w-auto object-contain select-none"
-              />
-            </div>
-            <p className="mt-4 text-sm text-white/85 max-w-md leading-relaxed">
-              Built to help students and aspiring researchers connect with the right labs faster,
-              with strong matching and polished outreach workflows.
+    <footer style={{ background: "var(--surface)", borderTop: "1px solid var(--border-sub)", padding: "48px 24px 32px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 40 }}>
+          <div style={{ gridColumn: "span 2" }}>
+            <img src={logoSrc} alt="Stellanet" style={{ height: 36, width: "auto", objectFit: "contain" }} />
+            <p style={{ marginTop: 16, fontSize: "0.8125rem", color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 340 }}>
+              Built to help students and aspiring researchers connect with the right labs, with AI-assisted matching and polished outreach workflows.
             </p>
           </div>
-
           <div>
-            <div className="text-xs uppercase tracking-wide text-white/70">Product</div>
-            <div className="mt-3 space-y-2 text-sm">
-              <button type="button" onClick={() => onNav("home")} className="block text-white/90 hover:text-white">
-                Home
-              </button>
-              <button type="button" onClick={() => onNav("about")} className="block text-white/90 hover:text-white">
-                About
-              </button>
-              <button type="button" onClick={() => onNav("app")} className="block text-white/90 hover:text-white">
-                Workspace
-              </button>
+            <div className="label-mono" style={{ marginBottom: 14 }}>Product</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[["Home","home"],["About","about"],["Workspace","app"]].map(([label, target]) => (
+                <button key={target} type="button" onClick={() => onNav(target)}
+                  style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: "0.8125rem", color: "var(--text-muted)", fontFamily: "'Instrument Sans', sans-serif", padding: 0, transition: "color 150ms" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+                >{label}</button>
+              ))}
             </div>
           </div>
-
           <div>
-            <div className="text-xs uppercase tracking-wide text-white/70">Company</div>
-            <div className="mt-3 space-y-2 text-sm text-white/90">
-              <div>Security-first workflow</div>
-              <div>Human-in-the-loop drafts</div>
-              <div>Startup MVP build</div>
+            <div className="label-mono" style={{ marginBottom: 14 }}>Platform</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.8125rem", color: "var(--text-dim)" }}>
+              <span>Human-in-the-loop drafts</span>
+              <span>Evidence-based discovery</span>
+              <span>Security-first workflow</span>
             </div>
           </div>
         </div>
-
-        <div className="mt-8 pt-4 border-t border-white/20 text-xs text-white/70 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-0 justify-between">
-          <span>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
-          <span>Made for modern research outreach.</span>
+        <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--border-sub)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)" }}>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)" }}>Modern research outreach</span>
         </div>
       </div>
     </footer>

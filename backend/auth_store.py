@@ -16,6 +16,7 @@ except Exception:  # pragma: no cover - optional dependency for local sqlite mod
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_PATH = os.getenv("AUTH_DB_PATH", os.path.join(os.path.dirname(__file__), "auth.db"))
 IS_POSTGRES = DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
+_DB_SSL_ROOT_CERT = os.getenv("DB_SSL_ROOT_CERT", "").strip()
 _LOCK = threading.Lock()
 
 
@@ -23,7 +24,11 @@ def _conn():
     if IS_POSTGRES:
         if psycopg2 is None:
             raise RuntimeError("psycopg2 is required when DATABASE_URL is set")
-        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        kwargs: dict = {"cursor_factory": RealDictCursor}
+        if _DB_SSL_ROOT_CERT:
+            kwargs["sslmode"] = "verify-full"
+            kwargs["sslrootcert"] = _DB_SSL_ROOT_CERT
+        return psycopg2.connect(DATABASE_URL, **kwargs)
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn

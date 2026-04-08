@@ -1,129 +1,106 @@
 function Step({ id, label, activeStep }) {
   const active = activeStep === id;
   return (
-    <span className={active ? "text-white font-semibold" : "text-emerald-100/80"}>
+    <span style={{
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: "0.6875rem",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: active ? "var(--gold)" : "var(--text-dim)",
+      fontWeight: active ? 500 : 400,
+      transition: "color 200ms",
+    }}>
       {label}
     </span>
   );
 }
 
 export default function AppHeader({
-  logoSrc,
-  sitePage,
-  currentUser,
-  onSignOut,
-  onOpenWorkspace,
-  onGoHowItWorks,
-  onSetSitePage,
-  payload,
-  appStepActive,
+  logoSrc, sitePage, currentUser, onSignOut,
+  onOpenWorkspace, onGoHowItWorks, onSetSitePage, payload, appStepActive,
 }) {
   return (
-    <header className="mb-8">
+    <header>
       <div
         id="top-nav"
-        className="sticky top-0 z-40 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 bg-[#064E3B] px-4 py-3"
+        style={{
+          position: "sticky", top: 0, zIndex: 40,
+          background: "rgba(12, 11, 9, 0.94)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border-sub)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 24px", height: "56px",
+        }}
       >
-        <div className="flex items-center">
-          <img
-            src={logoSrc}
-            alt="Stellanet logo"
-            className="h-12 md:h-14 w-auto object-contain select-none"
-          />
-        </div>
+        <button type="button" onClick={() => onSetSitePage("home")}
+          style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer" }}>
+          <img src={logoSrc} alt="Stellanet" style={{ height: 32, width: "auto", objectFit: "contain" }} />
+        </button>
 
-        <nav className="w-full md:w-auto flex flex-wrap items-center gap-2 md:justify-end">
-          <button
-            type="button"
-            onClick={() => onSetSitePage("home")}
-            className={[
-              "text-sm px-3 py-1.5 rounded-full transition",
-              sitePage === "home"
-                ? "bg-[#064E3B] text-white font-semibold border border-white/30"
-                : "text-white/90 hover:text-white hover:bg-black/10",
-            ].join(" ")}
-          >
-            Home
-          </button>
-          <button
-            type="button"
-            onClick={() => onSetSitePage("about")}
-            className={[
-              "text-sm px-3 py-1.5 rounded-full transition",
-              sitePage === "about"
-                ? "bg-[#064E3B] text-white font-semibold border border-white/30"
-                : "text-white/90 hover:text-white hover:bg-black/10",
-            ].join(" ")}
-          >
-            About
-          </button>
-          <button
-            type="button"
-            onClick={onGoHowItWorks}
-            className="text-sm px-3 py-1.5 rounded-full transition text-white/90 hover:text-white hover:bg-black/10"
-          >
-            How It Works
-          </button>
+        <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {[{ id: "home", label: "Home" }, { id: "about", label: "About" }].map(({ id, label }) => (
+            <button key={id} type="button" onClick={() => onSetSitePage(id)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", fontWeight: 500,
+                padding: "6px 12px", borderRadius: "3px",
+                color: sitePage === id ? "var(--text)" : "var(--text-muted)", transition: "color 150ms",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+              onMouseLeave={e => e.currentTarget.style.color = sitePage === id ? "var(--text)" : "var(--text-muted)"}
+            >{label}</button>
+          ))}
+
+          <button type="button" onClick={onGoHowItWorks}
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", fontWeight: 500, padding: "6px 12px", borderRadius: "3px", color: "var(--text-muted)", transition: "color 150ms" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+          >How It Works</button>
+
+          <div style={{ width: "1px", height: 18, background: "var(--border-sub)", margin: "0 8px" }} />
+
           {!currentUser ? (
-            <button
-              type="button"
-              onClick={() => onSetSitePage("signin")}
-              className={[
-                "text-sm px-3 py-1.5 rounded-full transition",
-                sitePage === "signin"
-                  ? "bg-[#064E3B] text-white font-semibold border border-white/30"
-                  : "text-white/90 hover:text-white hover:bg-black/10",
-              ].join(" ")}
-            >
-              Sign In
-            </button>
+            <button type="button" onClick={() => onSetSitePage("signin")}
+              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", fontWeight: 500, padding: "6px 12px", borderRadius: "3px", color: sitePage === "signin" ? "var(--gold)" : "var(--text-muted)", transition: "color 150ms" }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+              onMouseLeave={e => e.currentTarget.style.color = sitePage === "signin" ? "var(--gold)" : "var(--text-muted)"}
+            >Sign In</button>
           ) : (
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="text-sm px-3 py-1.5 rounded-full text-white/90 hover:text-white hover:bg-black/10 transition"
-            >
-              Sign Out
-            </button>
+            <button type="button" onClick={onSignOut}
+              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", fontWeight: 500, padding: "6px 12px", borderRadius: "3px", color: "var(--text-muted)", transition: "color 150ms" }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+              onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+            >Sign Out</button>
           )}
-          <button
-            type="button"
-            onClick={onOpenWorkspace}
-            className="rounded-full bg-[#064E3B] border border-white/40 px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#064E3B]/90 transition"
-          >
-            Open Workspace
+
+          <button type="button" onClick={onOpenWorkspace} className="btn-primary" style={{ marginLeft: 4 }}>
+            Workspace
           </button>
         </nav>
       </div>
 
-      <div className="mt-0 bg-[#064E3B] p-6 md:p-8">
-        <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-white leading-tight">
-          Stellanet
-        </h1>
-        <p className="text-emerald-50/90 mt-4 max-w-3xl text-base md:text-lg leading-relaxed">
-          Discover faculty aligned with your research interests and generate
-          personalized outreach email drafts — with human approval.
-        </p>
-
-        {sitePage === "app" && (
-          <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm mt-6 bg-emerald-900/40 border border-emerald-300/20 rounded-2xl md:rounded-full px-4 py-2 w-fit shadow-sm">
-            <Step id="setup" label="Setup" activeStep={appStepActive} />
-            <span className="text-emerald-200/70">→</span>
+      {sitePage === "app" && (
+        <div style={{
+          background: "var(--surface)", borderBottom: "1px solid var(--border)",
+          padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Step id="setup"   label="Setup"   activeStep={appStepActive} />
+            <span style={{ color: "var(--border)", fontFamily: "monospace", fontSize: "0.7rem" }}>›</span>
             <Step id="results" label="Results" activeStep={appStepActive} />
-            <span className="text-emerald-200/70">→</span>
-            <Step id="draft" label="Draft" activeStep={appStepActive} />
+            <span style={{ color: "var(--border)", fontFamily: "monospace", fontSize: "0.7rem" }}>›</span>
+            <Step id="draft"   label="Draft"   activeStep={appStepActive} />
           </div>
-        )}
-
-        {sitePage === "app" && payload && (
-          <div className="mt-4 inline-flex flex-wrap items-center gap-2 text-sm bg-emerald-900/35 border border-emerald-200/25 px-4 py-2 rounded-xl shadow-[0_12px_30px_-12px_rgba(6,95,70,0.6)]">
-            <span className="text-emerald-100 font-semibold">Current run</span>
-            <span className="text-emerald-50/85">
-              {payload.universities.join(", ")} • “{payload.interest}”
-            </span>
-          </div>
-        )}
-      </div>
+          {payload && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6875rem", color: "var(--text-dim)" }}>
+              <span style={{ color: "var(--gold)", letterSpacing: "0.08em" }}>RUN</span>
+              <span>{payload.universities.join(", ")}</span>
+              <span style={{ color: "var(--border)" }}>·</span>
+              <span>"{payload.interest.slice(0, 40)}{payload.interest.length > 40 ? "…" : ""}"</span>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

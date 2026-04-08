@@ -423,14 +423,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
-      {/* Premium soft glow blobs */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-44 -left-40 h-[34rem] w-[34rem] rounded-full bg-emerald-300/20 blur-3xl animate-blob" />
-        <div className="absolute top-10 -right-36 h-[30rem] w-[30rem] rounded-full bg-green-300/20 blur-3xl animate-blob" />
-        <div className="absolute bottom-[-10rem] left-1/3 h-[26rem] w-[26rem] rounded-full bg-teal-300/15 blur-3xl animate-blob" />
-      </div>
-
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <div className="relative w-full py-0">
         <DiscoveryLoadingOverlay show={discovering} message={loadingMessage} step={loadingStep} />
 
@@ -482,32 +475,20 @@ export default function App() {
         )}
 
         {sitePage === "notfound" && (
-          <div className="page-transition">
-            <section className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 md:p-10 shadow-[0_24px_50px_-35px_rgba(15,23,42,0.3)]">
-              <div className="text-xs uppercase tracking-[0.18em] text-slate-400 font-semibold">404</div>
-              <h2 className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
+          <div className="page-transition" style={{ maxWidth: 600, margin: "80px auto", padding: "0 24px" }}>
+            <div className="card" style={{ padding: "48px 40px" }}>
+              <span className="label-mono" style={{ color: "var(--gold)" }}>404</span>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.5rem", fontWeight: 400, marginTop: 12, color: "var(--text)" }}>
                 Page not found
               </h2>
-              <p className="mt-3 text-slate-600">
-                We could not find <span className="font-medium text-slate-800">{notFoundPath || window.location.pathname}</span>.
+              <p style={{ marginTop: 12, color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                We could not find <span style={{ color: "var(--text)", fontWeight: 600 }}>{notFoundPath || window.location.pathname}</span>.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSitePage("home")}
-                  className="rounded-xl bg-[#10B981] text-white px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-[#059669] transition"
-                >
-                  Go Home
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSitePage("signin")}
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-                >
-                  Go to Sign In
-                </button>
+              <div style={{ marginTop: 28, display: "flex", gap: 10 }}>
+                <button className="btn-primary" onClick={() => setSitePage("home")}>Go Home</button>
+                <button className="btn-ghost" onClick={() => setSitePage("signin")}>Sign In</button>
               </div>
-            </section>
+            </div>
           </div>
         )}
 
@@ -533,7 +514,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="h-px bg-slate-200/90" />
+        <div style={{ height: "1px", background: "var(--border-sub)" }} />
         <StartupFooter
           onNav={(target) => (target === "app" ? openWorkspace() : setSitePage(target))}
           logoSrc={stellanetLogo}

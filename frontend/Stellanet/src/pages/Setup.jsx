@@ -1,152 +1,145 @@
 import { useMemo, useState } from "react";
 
-const DEFAULT_UNIS = [
-  "Columbia University",
-  "NYU",
-  "Princeton University",
-  "Stanford University",
-];
+const DEFAULT_UNIS = ["Columbia University", "NYU", "Princeton University", "Stanford University"];
 
 export default function Setup({ onRun, loading = false }) {
-  const [interest, setInterest] = useState("");
-  const [profile, setProfile] = useState("");
+  const [interest, setInterest]         = useState("");
+  const [profile, setProfile]           = useState("");
   const [selectedUnis, setSelectedUnis] = useState([]);
-  const [customUni, setCustomUni] = useState("");
+  const [customUni, setCustomUni]       = useState("");
 
-  const canRun = useMemo(() => {
-    return interest.trim().length >= 10 && profile.trim().length >= 10 && selectedUnis.length > 0;
-  }, [interest, profile, selectedUnis]);
+  const canRun = useMemo(
+    () => interest.trim().length >= 10 && profile.trim().length >= 10 && selectedUnis.length > 0,
+    [interest, profile, selectedUnis]
+  );
 
-  const toggleUni = (uni) => {
-    setSelectedUnis((prev) =>
-      prev.includes(uni) ? prev.filter((u) => u !== uni) : [...prev, uni]
-    );
-  };
-
+  const toggleUni = uni => setSelectedUnis(p => p.includes(uni) ? p.filter(u => u !== uni) : [...p, uni]);
   const addCustomUni = () => {
     const v = customUni.trim();
     if (!v) return;
-    if (!selectedUnis.includes(v)) setSelectedUnis((prev) => [...prev, v]);
+    if (!selectedUnis.includes(v)) setSelectedUnis(p => [...p, v]);
     setCustomUni("");
   };
 
-  const handleRun = async () => {
-    if (!canRun || loading) return;
-    await onRun?.({
-      interest: interest.trim(),
-      profile: profile.trim(),
-      universities: selectedUnis,
-    });
-  };
-
   return (
-    <div className="bg-white/75 backdrop-blur border border-sky-100/90 shadow-[0_20px_45px_-30px_rgba(2,132,199,0.45)] rounded-3xl p-6 md:p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">Research Setup</h2>
-          <p className="text-slate-600 mt-1">
-            Tell Stellanet what you’re interested in. We’ll discover relevant faculty and draft
-            personalized outreach emails.
-          </p>
-        </div>
-        <span className="text-xs bg-sky-50 border border-sky-200 rounded-full px-3 py-1 text-sky-700">
-          Draft-only • Human-in-the-loop
-        </span>
-      </div>
+    <div className="page-transition" style={{ background: "var(--bg)", minHeight: "calc(100vh - 108px)", padding: "48px 32px" }}>
+      <div style={{ maxWidth: 780, margin: "0 auto" }}>
 
-      <div className="mt-6 grid grid-cols-1 gap-5">
-        <div>
-          <label className="text-sm font-medium text-slate-800">Research interest</label>
-          <textarea
-            className="mt-2 w-full rounded-xl border border-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500/25 p-3 min-h-[110px] bg-white/90"
-            value={interest}
-            onChange={(e) => setInterest(e.target.value)}
-            placeholder="e.g., Robust CNNs for satellite imagery; domain shift; data efficiency..."
-          />
-          <p className="text-xs text-slate-500 mt-2">
-            Tip: include the topic, domain (e.g., remote sensing), and what you want to do.
+        {/* Page header */}
+        <div style={{ marginBottom: 36 }}>
+          <span className="label-mono" style={{ color: "var(--coral)" }}>Workspace</span>
+          <h2 className="section-title" style={{ fontSize: "2.5rem", marginTop: 10 }}>Define your search</h2>
+          <p style={{ marginTop: 10, fontSize: "0.9375rem", color: "var(--text-muted)" }}>
+            Tell Stellanet what you're working on. We'll find aligned faculty and draft personalized emails.
           </p>
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-slate-800">Your short profile</label>
-          <textarea
-            className="mt-2 w-full rounded-xl border border-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500/25 p-3 min-h-[90px] bg-white/90"
-            value={profile}
-            onChange={(e) => setProfile(e.target.value)}
-            placeholder="Year, major, skills, projects, and what you’re seeking (research/RA)."
-          />
-          <p className="text-xs text-slate-500 mt-2">
-            Keep it 1–3 sentences. We’ll use this to personalize emails.
-          </p>
-        </div>
+        {/* Form card */}
+        <div style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 20,
+          padding: "40px 36px",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.05)",
+          display: "flex", flexDirection: "column", gap: 28,
+        }}>
 
-        <div>
-          <label className="text-sm font-medium text-slate-800">Target universities</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {DEFAULT_UNIS.map((uni) => {
-              const active = selectedUnis.includes(uni);
-              return (
-                <button
-                  key={uni}
-                  type="button"
-                  onClick={() => toggleUni(uni)}
-                  className={[
-                    "px-3 py-2 rounded-xl text-sm border transition",
-                    active
-                      ? "bg-sky-600 text-white border-sky-600 shadow-sm"
-                      : "bg-white text-slate-700 border-sky-100 hover:border-sky-300",
-                  ].join(" ")}
-                >
-                  {uni}
-                </button>
-              );
-            })}
+          {/* Research interest */}
+          <div>
+            <label className="label-mono" style={{ display: "block", marginBottom: 8 }}>Research Interest</label>
+            <textarea
+              className="input-base"
+              rows={4}
+              value={interest}
+              onChange={e => setInterest(e.target.value)}
+              placeholder="e.g., Robust CNNs for satellite imagery; domain shift; data efficiency…"
+              style={{ resize: "vertical" }}
+            />
+            <p style={{ marginTop: 6, fontSize: "0.75rem", color: "var(--text-dim)" }}>
+              Include the topic, domain, and what you want to achieve. Minimum 10 characters.
+            </p>
           </div>
 
-          <div className="mt-3 flex gap-2">
-            <input
-              className="flex-1 rounded-xl border border-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500/25 px-3 py-2 bg-white/90"
-              value={customUni}
-              onChange={(e) => setCustomUni(e.target.value)}
-              placeholder="Add another university (optional)"
+          {/* Short profile */}
+          <div>
+            <label className="label-mono" style={{ display: "block", marginBottom: 8 }}>Your Short Profile</label>
+            <textarea
+              className="input-base"
+              rows={3}
+              value={profile}
+              onChange={e => setProfile(e.target.value)}
+              placeholder="Year, major, skills, projects, and what you're seeking (research / RA)."
+              style={{ resize: "vertical" }}
             />
+            <p style={{ marginTop: 6, fontSize: "0.75rem", color: "var(--text-dim)" }}>
+              Keep it 1–3 sentences. Used to personalize your emails.
+            </p>
+          </div>
+
+          {/* Target universities */}
+          <div>
+            <label className="label-mono" style={{ display: "block", marginBottom: 12 }}>Target Universities</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {DEFAULT_UNIS.map(uni => {
+                const active = selectedUnis.includes(uni);
+                return (
+                  <button
+                    key={uni}
+                    type="button"
+                    onClick={() => toggleUni(uni)}
+                    style={{
+                      background: active ? "var(--coral)" : "var(--bg)",
+                      color: active ? "#fff" : "var(--text-muted)",
+                      border: `1.5px solid ${active ? "var(--coral)" : "var(--border)"}`,
+                      borderRadius: 10, padding: "8px 16px",
+                      fontSize: "0.875rem", fontFamily: "'Figtree', sans-serif",
+                      fontWeight: active ? 600 : 400, cursor: "pointer",
+                      transition: "all 150ms",
+                      boxShadow: active ? "0 2px 8px rgba(232,98,42,0.2)" : "none",
+                    }}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = "var(--coral)"; e.currentTarget.style.color = "var(--coral)"; }}}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}}
+                  >
+                    {uni}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+              <input
+                className="input-base"
+                value={customUni}
+                onChange={e => setCustomUni(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addCustomUni()}
+                placeholder="Add another university…"
+                style={{ flex: 1 }}
+              />
+              <button type="button" onClick={addCustomUni} className="btn-ghost" style={{ flexShrink: 0 }}>Add</button>
+            </div>
+
+            {selectedUnis.length > 0 && (
+              <div style={{ marginTop: 10, fontSize: "0.8125rem", color: "var(--text-dim)" }}>
+                <span style={{ color: "var(--coral)", fontWeight: 600 }}>Selected: </span>
+                {selectedUnis.join(" · ")}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div style={{ borderTop: "1px solid var(--border-sub)", paddingTop: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <p className="label-mono">Draft-only · Human review before sending</p>
             <button
               type="button"
-              onClick={addCustomUni}
-              className="px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-500 transition"
+              onClick={async () => { if (canRun && !loading) await onRun?.({ interest: interest.trim(), profile: profile.trim(), universities: selectedUnis }); }}
+              disabled={!canRun || loading}
+              className="btn-primary"
+              style={{ fontSize: "0.9375rem", padding: "11px 26px" }}
             >
-              Add
+              {loading ? "Searching…" : "Run Discovery →"}
             </button>
           </div>
 
-          {selectedUnis.length > 0 && (
-            <div className="mt-3 text-sm text-slate-700">
-              Selected:{" "}
-              <span className="font-medium">
-                {selectedUnis.join(", ")}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="pt-2 flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-500">
-            We’ll create drafts only. You review before sending.
-          </p>
-          <button
-            type="button"
-            onClick={handleRun}
-            disabled={!canRun || loading}
-            className={[
-              "px-5 py-2.5 rounded-xl font-medium transition",
-              canRun && !loading
-                ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white hover:from-sky-500 hover:to-cyan-500 shadow-sm"
-                : "bg-slate-200 text-slate-500 cursor-not-allowed",
-            ].join(" ")}
-          >
-            {loading ? "Finding mentors..." : "Run Discovery"}
-          </button>
         </div>
       </div>
     </div>
