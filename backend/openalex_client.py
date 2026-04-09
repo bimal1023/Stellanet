@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import requests
 import re
 from datetime import datetime
@@ -13,14 +14,26 @@ SESSION = requests.Session()
 SESSION.trust_env = False
 AUTHOR_PROFILE_CACHE: dict[str, dict] = {}
 
-def _get(url: str, params: dict | None = None) -> dict:
+def _get(url: str, params: dict | None = None, _retries: int = 3) -> dict:
     params = params or {}
     if MAILTO:
         params["mailto"] = MAILTO
 
-    r = SESSION.get(url, params=params, timeout=45)
-    r.raise_for_status()
-    return r.json()
+    last_exc: Exception | None = None
+    for attempt in range(_retries):
+        try:
+            r = SESSION.get(url, params=params, timeout=45)
+            if r.status_code in (429, 503):
+                wait = 2 ** attempt  # 1s, 2s, 4s
+                time.sleep(wait)
+                continue
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.Timeout as exc:
+            last_exc = exc
+            if attempt < _retries - 1:
+                time.sleep(2 ** attempt)
+    raise last_exc or requests.exceptions.RequestException(f"Failed after {_retries} retries: {url}")
 
 def find_institution_id(name: str) -> str | None:
     data = _get(f"{OPENALEX_BASE}/institutions", params={"search": name, "per-page": 1})
