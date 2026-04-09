@@ -18,7 +18,7 @@ def _get(url: str, params: dict | None = None) -> dict:
     if MAILTO:
         params["mailto"] = MAILTO
 
-    r = SESSION.get(url, params=params, timeout=20)
+    r = SESSION.get(url, params=params, timeout=45)
     r.raise_for_status()
     return r.json()
 
@@ -185,10 +185,11 @@ def _passes_filters(meta: dict, filters: dict | None = None) -> bool:
 def discover_authors_for_institution(
     inst_id: str,
     query: str,
-    per_page: int = 25,
+    per_page: int = 10,
     *,
     inst_record: dict | None = None,
     filters: dict | None = None,
+    max_profiles: int = 10,
 ) -> list[dict]:
     works = _get(
         f"{OPENALEX_BASE}/works",
@@ -226,6 +227,9 @@ def discover_authors_for_institution(
             if not aid or not name:
                 continue
 
+            # Cap profile lookups to avoid excessive sequential HTTP calls on App Runner
+            if aid not in AUTHOR_PROFILE_CACHE and len(AUTHOR_PROFILE_CACHE) >= max_profiles:
+                continue
             profile = _get_author_profile(aid)
             if not _is_likely_faculty(profile, inst_id):
                 continue
