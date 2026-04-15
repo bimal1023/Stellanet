@@ -3,6 +3,7 @@ import math
 import time
 import requests
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from collections import defaultdict
 from urllib.parse import urlparse
@@ -397,6 +398,38 @@ def build_results(
 # STELLANET MODE (grounded candidates only)
 # ---------------------------------------------------
 
+def _fetch_candidates_for_uni(uni: str, interest: str, top_k: int, filters: dict | None) -> list[dict]:
+    """Fetch institution record + author candidates for one university (runs in thread)."""
+    inst = _find_institution_record(uni)
+    inst_id = inst.get("id")
+    if not inst_id:
+        return []
+    cands = discover_authors_for_institution(
+        inst_id,
+        interest,
+        inst_record=inst,
+        filters=filters,
+    )
+    results = []
+    for c in cands[:top_k]:
+        results.append({
+            "author_id": c.get("id"),
+            "name": c.get("name"),
+            "university": uni,
+            "location": c.get("location", ""),
+            "country": c.get("country", ""),
+            "research_type": c.get("research_type", ""),
+            "contact_email": c.get("contact_email", ""),
+            "contact_email_source": c.get("contact_email_source", "unavailable"),
+            "contact_email_confidence": c.get("contact_email_confidence", "none"),
+            "top_work_title": c.get("top_work_title"),
+            "top_work_year": c.get("top_work_year"),
+            "top_work_citations": c.get("top_work_citations"),
+            "top_work_abstract": c.get("top_work_abstract"),
+        })
+    return results
+
+
 def build_stellanet_candidates(
     interest: str,
     universities: list[str],
@@ -404,37 +437,18 @@ def build_stellanet_candidates(
     filters: dict | None = None,
 ) -> list[dict]:
     all_candidates = []
-    inst_map = {}
 
-    for uni in universities:
-        inst = _find_institution_record(uni)
-        inst_id = inst.get("id")
-        if inst_id:
-            inst_map[uni] = inst
-
-    for uni, inst in inst_map.items():
-        cands = discover_authors_for_institution(
-            inst.get("id"),
-            interest,
-            inst_record=inst,
-            filters=filters,
-        )
-        for c in cands[:top_k]:
-            all_candidates.append({
-                "author_id": c.get("id"),
-                "name": c.get("name"),
-                "university": uni,
-                "location": c.get("location", ""),
-                "country": c.get("country", ""),
-                "research_type": c.get("research_type", ""),
-                "contact_email": c.get("contact_email", ""),
-                "contact_email_source": c.get("contact_email_source", "unavailable"),
-                "contact_email_confidence": c.get("contact_email_confidence", "none"),
-                "top_work_title": c.get("top_work_title"),
-                "top_work_year": c.get("top_work_year"),
-                "top_work_citations": c.get("top_work_citations"),
-                "top_work_abstract": c.get("top_work_abstract"),
-            })
+    # Fetch all universities in parallel to avoid sequential HTTP call pile-up
+    with ThreadPoolExecutor(max_workers=min(len(universities), 4)) as executor:
+        futures = {
+            executor.submit(_fetch_candidates_for_uni, uni, interest, top_k, filters): uni
+            for uni in universities
+        }
+        for future in as_completed(futures):
+            try:
+                all_candidates.extend(future.result())
+            except Exception:
+                pass  # individual university failure doesn't break the whole request
 
     seen = set()
     dedup = []

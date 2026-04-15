@@ -28,6 +28,16 @@ def _conn():
         if _DB_SSL_ROOT_CERT:
             kwargs["sslmode"] = "verify-full"
             kwargs["sslrootcert"] = _DB_SSL_ROOT_CERT
+        else:
+            # Auto-detect Supabase bundled cert shipped with the image.
+            _bundled_cert = os.path.join(os.path.dirname(__file__), "global-bundle.pem")
+            if os.path.isfile(_bundled_cert):
+                kwargs["sslmode"] = "verify-full"
+                kwargs["sslrootcert"] = _bundled_cert
+            else:
+                # Supabase (and most managed Postgres) require SSL — enforce it.
+                kwargs["sslmode"] = "require"
+        kwargs["connect_timeout"] = 5
         return psycopg2.connect(DATABASE_URL, **kwargs)
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row

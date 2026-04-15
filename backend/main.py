@@ -1,5 +1,7 @@
+import asyncio
 import os
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -30,9 +32,22 @@ from mailer import (
     send_contact_message,
 )
 
-app = FastAPI()
-init_auth_db()
 logger = logging.getLogger("stellanet.auth")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        loop = asyncio.get_event_loop()
+        await asyncio.wait_for(loop.run_in_executor(None, init_auth_db), timeout=15.0)
+    except asyncio.TimeoutError:
+        logger.error("DB init timed out at startup — continuing without DB ready")
+    except Exception as exc:
+        logger.error("DB init failed at startup — continuing: %s", exc)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 # Safer default for production; enable only when explicitly needed.
 AUTH_EXPOSE_TOKENS = os.getenv("AUTH_EXPOSE_TOKENS", "false").strip().lower() == "true"
 default_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
@@ -133,6 +148,11 @@ def _extract_bearer_token(authorization: str | None) -> str:
 @app.get("/")
 def root():
     return {"message": "Stellanet backend running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/auth/signup")
