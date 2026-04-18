@@ -25,3 +25,6 @@ frontend/Stellanet/dist/
 
 # Local backup virtualenv
 backend/venv_broken_backup
+
+# Claude Code internal files
+.claude/
