@@ -1,10 +1,18 @@
+/* Light-theme shell parts */
+
 export function Badge({ children, tone = "neutral" }) {
   const styles = {
-    neutral: { background: "var(--gold-bg)", color: "var(--gold)", border: "1px solid var(--border)" },
-    info:    { background: "var(--green-bg)", color: "var(--green)", border: "1px solid rgba(82,224,124,0.2)" },
+    neutral: { background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent-soft)" },
+    info:    { background: "var(--green-bg)",    color: "var(--green)",  border: "1px solid var(--green-bg)" },
   };
   return (
-    <span style={{ ...styles[tone], fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 10px", borderRadius: "2px", display: "inline-flex", alignItems: "center" }}>
+    <span style={{
+      ...styles[tone],
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase",
+      padding: "4px 10px", borderRadius: 999,
+      display: "inline-flex", alignItems: "center", gap: 6,
+    }}>
       {children}
     </span>
   );
@@ -12,31 +20,49 @@ export function Badge({ children, tone = "neutral" }) {
 
 export function DiscoveryLoadingOverlay({ show, message, step }) {
   if (!show) return null;
-  const pct = Math.min(100, 18 + step * 27);
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(12, 11, 9, 0.82)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <div style={{ width: "100%", maxWidth: 420, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "6px", padding: "32px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: "4px", background: "var(--gold-bg)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <div style={{ width: 16, height: 16, border: "2px solid var(--gold)", borderTopColor: "transparent", borderRadius: "50%" }} className="spin" />
-          </div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text)" }}>Discovering your matches</div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)", marginTop: 2 }}>Step {step} of 3</div>
-          </div>
-        </div>
-        <div style={{ marginTop: 20, height: "2px", background: "var(--border-sub)", borderRadius: "1px", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${pct}%`, background: "var(--gold)", borderRadius: "1px", transition: "width 500ms cubic-bezier(0.16,1,0.3,1)" }} />
-        </div>
-        <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--surface-2)", border: "1px solid var(--border-sub)", borderRadius: "4px", fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8, minHeight: 44 }}>
-          <span style={{ color: "var(--gold)", flexShrink: 0 }}>›</span>
-          {message}
-          <span style={{ display: "inline-flex", gap: 3, marginLeft: 4 }}>
-            {[0, 150, 300].map(delay => (
-              <span key={delay} style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold)", display: "inline-block", animation: `fadeIn 0.6s ${delay}ms ease-in-out infinite alternate` }} />
-            ))}
-          </span>
-        </div>
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 80,
+      background: "rgba(246, 243, 236, 0.94)",
+      backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexDirection: "column", gap: 28,
+      animation: "fadeIn 200ms",
+    }}>
+      <style>{`@keyframes fadeIn{from{opacity:0}to{opacity:1}} @keyframes pulse{50%{opacity:.4;transform:scale(.8)}}`}</style>
+
+      {/* Rotating diamond mark */}
+      <div style={{
+        width: 40, height: 40,
+        border: "1px solid var(--ink)",
+        transform: "rotate(45deg)",
+        position: "relative",
+      }}>
+        <div style={{
+          position: "absolute", inset: 6,
+          background: "var(--accent)",
+          animation: "pulse 1.6s ease-in-out infinite",
+        }} />
+      </div>
+
+      {/* Status text */}
+      <div style={{
+        fontFamily: "'Cormorant Garamond', serif",
+        fontStyle: "italic", fontSize: 26,
+        color: "var(--ink-2)", textAlign: "center",
+        maxWidth: 480, lineHeight: 1.3,
+        transition: "opacity 240ms",
+        key: message,
+      }}>
+        {message}
+      </div>
+
+      <div style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 10.5, letterSpacing: "0.18em",
+        textTransform: "uppercase", color: "var(--dim)",
+      }}>
+        Step {step} of 3
       </div>
     </div>
   );
@@ -44,40 +70,71 @@ export function DiscoveryLoadingOverlay({ show, message, step }) {
 
 export function StartupFooter({ onNav, logoSrc }) {
   return (
-    <footer style={{ background: "var(--surface)", borderTop: "1px solid var(--border-sub)", padding: "48px 24px 32px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 40 }}>
-          <div style={{ gridColumn: "span 2" }}>
-            <img src={logoSrc} alt="Stellanet" style={{ height: 36, width: "auto", objectFit: "contain" }} />
-            <p style={{ marginTop: 16, fontSize: "0.8125rem", color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 340 }}>
-              Built to help students and aspiring researchers connect with the right labs, with AI-assisted matching and polished outreach workflows.
-            </p>
-          </div>
-          <div>
-            <div className="label-mono" style={{ marginBottom: 14 }}>Product</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[["Home","home"],["About","about"],["Workspace","app"]].map(([label, target]) => (
-                <button key={target} type="button" onClick={() => onNav(target)}
-                  style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: "0.8125rem", color: "var(--text-muted)", fontFamily: "'Instrument Sans', sans-serif", padding: 0, transition: "color 150ms" }}
-                  onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
-                >{label}</button>
+    <footer style={{
+      borderTop: "1px solid var(--rule-soft)",
+      background: "var(--bg)",
+      padding: "56px 32px 40px",
+    }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 2fr", gap: 48, alignItems: "start" }}>
+        <div style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 18, color: "var(--ink-2)",
+          maxWidth: 320, lineHeight: 1.45,
+          fontStyle: "italic", fontWeight: 400,
+        }}>
+          A small tool for a slow, careful part of academic life — finding the people whose work makes yours possible.
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 36 }}>
+          {[
+            {
+              heading: "Product",
+              links: [["Features", "home"], ["How it works", "home"], ["Workspace", "app"]],
+            },
+            {
+              heading: "Company",
+              links: [["About", "about"], ["Contact", "about"], ["Privacy", null], ["Terms", null]],
+            },
+            {
+              heading: "Account",
+              links: [["Sign In", "signin"], ["Sign Up", "signin"]],
+            },
+          ].map(({ heading, links }) => (
+            <div key={heading}>
+              <div className="label-mono" style={{ marginBottom: 14 }}>{heading}</div>
+              {links.map(([label, target]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={target ? () => onNav(target) : undefined}
+                  disabled={!target}
+                  style={{
+                    display: "block", background: "none", border: "none",
+                    cursor: target ? "pointer" : "default",
+                    fontSize: 14, color: "var(--ink-2)", padding: "4px 0",
+                    fontFamily: "'Instrument Sans', sans-serif", textAlign: "left",
+                    transition: "color 160ms", width: "100%",
+                  }}
+                  onMouseEnter={e => { if (target) e.currentTarget.style.color = "var(--accent)"; }}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--ink-2)"}
+                >
+                  {label}
+                </button>
               ))}
             </div>
-          </div>
-          <div>
-            <div className="label-mono" style={{ marginBottom: 14 }}>Platform</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: "0.8125rem", color: "var(--text-dim)" }}>
-              <span>Human-in-the-loop drafts</span>
-              <span>Evidence-based discovery</span>
-              <span>Security-first workflow</span>
-            </div>
-          </div>
+          ))}
         </div>
-        <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--border-sub)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)" }}>© {new Date().getFullYear()} Stellanet. All rights reserved.</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.625rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-dim)" }}>Modern research outreach</span>
-        </div>
+      </div>
+
+      <div style={{
+        maxWidth: 1180, margin: "56px auto 0", paddingTop: 22,
+        borderTop: "1px solid var(--rule-soft)",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+        color: "var(--dim)", letterSpacing: "0.06em",
+      }}>
+        <span>© {new Date().getFullYear()} Stellanet — made for the long-form internet.</span>
+        <span>v0.4 · New York &amp; Cambridge</span>
       </div>
     </footer>
   );

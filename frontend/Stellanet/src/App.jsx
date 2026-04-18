@@ -427,17 +427,19 @@ export default function App() {
       <div className="relative w-full py-0">
         <DiscoveryLoadingOverlay show={discovering} message={loadingMessage} step={loadingStep} />
 
-        <AppHeader
-          logoSrc={stellanetLogo}
-          sitePage={sitePage}
-          currentUser={currentUser}
-          onSignOut={handleSignOut}
-          onOpenWorkspace={openWorkspace}
-          onGoHowItWorks={goToHowItWorks}
-          onSetSitePage={setSitePage}
-          payload={payload}
-          appStepActive={appStepActive}
-        />
+        {sitePage !== "home" && (
+          <AppHeader
+            logoSrc={stellanetLogo}
+            sitePage={sitePage}
+            currentUser={currentUser}
+            onSignOut={handleSignOut}
+            onOpenWorkspace={openWorkspace}
+            onGoHowItWorks={goToHowItWorks}
+            onSetSitePage={setSitePage}
+            payload={payload}
+            appStepActive={appStepActive}
+          />
+        )}
 
         {sitePage === "home" && (
           <HomeSections
@@ -514,11 +516,15 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ height: "1px", background: "var(--border-sub)" }} />
-        <StartupFooter
-          onNav={(target) => (target === "app" ? openWorkspace() : setSitePage(target))}
-          logoSrc={stellanetLogo}
-        />
+        {sitePage !== "home" && (
+          <>
+            <div style={{ height: "1px", background: "var(--border-sub)" }} />
+            <StartupFooter
+              onNav={(target) => (target === "app" ? openWorkspace() : setSitePage(target))}
+              logoSrc={stellanetLogo}
+            />
+          </>
+        )}
       </div>
     </div>
   );

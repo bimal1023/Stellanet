@@ -217,6 +217,8 @@ def discover_authors_for_institution(
 
     author_score = defaultdict(float)
     author_meta = {}
+    # Track new fetches within this call only; hits to the shared cache don't count.
+    new_fetches = 0
 
     for w in works:
         cited = w.get("cited_by_count", 0) or 0
@@ -241,9 +243,13 @@ def discover_authors_for_institution(
             if not aid or not name:
                 continue
 
-            # Cap profile lookups to avoid excessive sequential HTTP calls on App Runner
-            if aid not in AUTHOR_PROFILE_CACHE and len(AUTHOR_PROFILE_CACHE) >= max_profiles:
+            # Cap NEW profile HTTP fetches per call to avoid excessive sequential
+            # requests on App Runner. Authors already in the shared cache are free.
+            is_cached = aid in AUTHOR_PROFILE_CACHE
+            if not is_cached and new_fetches >= max_profiles:
                 continue
+            if not is_cached:
+                new_fetches += 1
             profile = _get_author_profile(aid)
             if not _is_likely_faculty(profile, inst_id):
                 continue
