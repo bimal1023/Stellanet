@@ -110,6 +110,7 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
             { label: "Home",         action: () => onSetSitePage("home") },
             { label: "How it works", action: () => onScrollTo("how") },
             { label: "About",        action: () => onScrollTo("about") },
+            { label: "Contact",      action: () => onScrollTo("contact") },
           ].map(({ label, action }) => (
             <button
               key={label}
@@ -554,6 +555,128 @@ function QuoteSection() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   GET IN TOUCH
+══════════════════════════════════════════════════════════════ */
+function ContactSection({ contactForm, onContactInput, onContactSubmit, contactBusy, contactSubmitted, contactError }) {
+  return (
+    <Reveal>
+      <section id="contact" style={{ background: "var(--lp-bg2)", borderTop: "1px solid var(--lp-rule-soft)" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "96px 32px 104px", display: "grid", gridTemplateColumns: "5fr 7fr", gap: 80, alignItems: "start" }}>
+
+          {/* Left — context */}
+          <div>
+            <span style={S.labelMono}>§ 04 / Get in touch</span>
+            <h2 style={{ ...S.serif, fontWeight: 400, fontSize: "clamp(34px, 4.0vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.012em", color: "var(--lp-ink)", marginTop: 18 }}>
+              Questions?<br /><em style={{ fontStyle: "italic", color: "var(--lp-accent)" }}>We read every one.</em>
+            </h2>
+            <p style={{ marginTop: 20, fontSize: 15, lineHeight: 1.65, color: "var(--lp-muted)", maxWidth: "38ch" }}>
+              Whether you're a student with a use-case question, a researcher with feedback, or someone who just wants to say something — the inbox is open.
+            </p>
+            <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { label: "General", value: "info@stellanetconnect.com" },
+                { label: "Response time", value: "Usually within 48 h" },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 12, alignItems: "baseline" }}>
+                  <span style={{ ...S.labelMono, fontSize: 10 }}>{label}</span>
+                  <span style={{ fontSize: 13.5, color: "var(--lp-ink2)", fontFamily: "'JetBrains Mono', monospace" }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — form */}
+          <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-rule)", borderRadius: 8, padding: "36px 36px 32px", boxShadow: "0 1px 0 rgba(255,255,255,0.6) inset, 0 24px 40px -28px rgba(26,24,22,0.10)" }}>
+            {contactSubmitted ? (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{ width: 40, height: 40, border: "1px solid var(--lp-ink)", transform: "rotate(45deg)", margin: "0 auto 24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 10, height: 10, background: "var(--lp-accent)", transform: "rotate(45deg)" }} />
+                </div>
+                <p style={{ ...S.serif, fontStyle: "italic", fontSize: 22, color: "var(--lp-ink)", lineHeight: 1.3 }}>Message received.</p>
+                <p style={{ marginTop: 10, fontSize: 14, color: "var(--lp-muted)" }}>We'll be in touch within 48 hours.</p>
+              </div>
+            ) : (
+              <form onSubmit={onContactSubmit} style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  {[
+                    { key: "first_name", label: "First name", placeholder: "Ada" },
+                    { key: "last_name",  label: "Last name",  placeholder: "Lovelace" },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key}>
+                      <label style={{ ...S.labelMono, fontSize: 10, display: "block", marginBottom: 8 }}>{label}</label>
+                      <input
+                        className="input-base"
+                        value={contactForm?.[key] || ""}
+                        onChange={e => onContactInput(key, e.target.value)}
+                        placeholder={placeholder}
+                        style={{ fontSize: 13.5, width: "100%", boxSizing: "border-box" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <label style={{ ...S.labelMono, fontSize: 10, display: "block", marginBottom: 8 }}>Email address</label>
+                  <input
+                    className="input-base"
+                    type="email"
+                    required
+                    value={contactForm?.email || ""}
+                    onChange={e => onContactInput("email", e.target.value)}
+                    placeholder="ada@mit.edu"
+                    style={{ fontSize: 13.5, width: "100%", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ ...S.labelMono, fontSize: 10, display: "block", marginBottom: 8 }}>Message</label>
+                  <textarea
+                    className="input-base"
+                    required
+                    rows={5}
+                    value={contactForm?.message || ""}
+                    onChange={e => onContactInput("message", e.target.value)}
+                    placeholder="What's on your mind?"
+                    style={{ fontSize: 13.5, width: "100%", boxSizing: "border-box", resize: "vertical" }}
+                  />
+                </div>
+
+                {contactError && (
+                  <p style={{ fontSize: 12.5, color: "var(--lp-accent)", fontFamily: "'JetBrains Mono', monospace" }}>
+                    {contactError}
+                  </p>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    type="submit"
+                    disabled={contactBusy}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      padding: "10px 20px", borderRadius: 4,
+                      border: "1px solid var(--lp-ink)",
+                      background: contactBusy ? "var(--lp-bg2)" : "var(--lp-ink)",
+                      color: contactBusy ? "var(--lp-muted)" : "var(--lp-bg)",
+                      fontSize: 13, fontWeight: 500, cursor: contactBusy ? "default" : "pointer",
+                      fontFamily: "'Instrument Sans', sans-serif",
+                      transition: "background 160ms, color 160ms",
+                    }}
+                    onMouseEnter={e => { if (!contactBusy) e.currentTarget.style.background = "var(--lp-ink2)"; }}
+                    onMouseLeave={e => { if (!contactBusy) e.currentTarget.style.background = "var(--lp-ink)"; }}
+                  >
+                    {contactBusy ? "Sending…" : "Send message →"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+    </Reveal>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    FOOTER
 ══════════════════════════════════════════════════════════════ */
 function LandingFooter({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
@@ -627,7 +750,7 @@ function LandingFooter({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
 /* ══════════════════════════════════════════════════════════════
    ROOT EXPORT
 ══════════════════════════════════════════════════════════════ */
-export default function HomeSections({ onOpenWorkspace, onSetSitePage }) {
+export default function HomeSections({ onOpenWorkspace, onSetSitePage, contactForm, onContactInput, onContactSubmit, contactBusy, contactSubmitted, contactError }) {
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -649,6 +772,15 @@ export default function HomeSections({ onOpenWorkspace, onSetSitePage }) {
       <HowSection />
 
       <QuoteSection />
+
+      <ContactSection
+        contactForm={contactForm}
+        onContactInput={onContactInput}
+        onContactSubmit={onContactSubmit}
+        contactBusy={contactBusy}
+        contactSubmitted={contactSubmitted}
+        contactError={contactError}
+      />
 
       <LandingFooter onOpenWorkspace={onOpenWorkspace} onSetSitePage={onSetSitePage} onScrollTo={scrollTo} />
     </div>
