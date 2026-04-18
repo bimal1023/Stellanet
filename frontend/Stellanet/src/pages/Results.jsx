@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 /* ── sort/filter toggle ── */
 function Toggle({ value, onChange, options, label }) {
@@ -151,6 +152,7 @@ function MatchCard({ r, rank, expanded, onToggle, onDraft, wide }) {
 }
 
 export default function Results({ results, onViewDraft, onBack }) {
+  const isMobile = useIsMobile();
   const [sort, setSort]     = useState("fit");    // fit | name | university
   const [filter, setFilter] = useState("all");    // all | accepting
   const [openId, setOpenId] = useState(null);
@@ -182,11 +184,11 @@ export default function Results({ results, onViewDraft, onBack }) {
   }
 
   return (
-    <div className="page-transition" style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 32px 96px" }}>
+    <div className="page-transition" style={{ maxWidth: 1180, margin: "0 auto", padding: isMobile ? "28px 16px 64px" : "56px 32px 96px" }}>
 
       {/* Header */}
       <div style={{
-        display: "grid", gridTemplateColumns: "1fr auto", gap: 20,
+        display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap: 20,
         alignItems: "end", marginBottom: 36, paddingBottom: 24,
         borderBottom: "1px solid var(--rule-soft)",
       }}>
@@ -204,7 +206,7 @@ export default function Results({ results, onViewDraft, onBack }) {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end" }}>
           <Toggle
             value={sort} onChange={setSort} label="Sort"
             options={[{ v: "fit", label: "Fit" }, { v: "name", label: "Name" }, { v: "university", label: "School" }]}
@@ -216,21 +218,23 @@ export default function Results({ results, onViewDraft, onBack }) {
         </div>
       </div>
 
-      {/* Magazine grid: 12-col asymmetric */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 24 }}>
+      {/* Magazine grid: 12-col asymmetric on desktop, 1-col on mobile */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(12, 1fr)", gap: isMobile ? 16 : 24 }}>
         {sorted.map((r, i) => {
-          let span;
-          if (i === 0)      span = 12;
-          else if (i % 4 === 1) span = 7;
-          else if (i % 4 === 2) span = 5;
-          else if (i % 4 === 3) span = 5;
-          else               span = 7;
+          let span = 12;
+          if (!isMobile) {
+            if (i === 0)           span = 12;
+            else if (i % 4 === 1)  span = 7;
+            else if (i % 4 === 2)  span = 5;
+            else if (i % 4 === 3)  span = 5;
+            else                   span = 7;
+          }
 
           return (
             <div key={r.id} style={{ gridColumn: `span ${span}` }}>
               <MatchCard
                 r={r} rank={i + 1}
-                wide={i === 0 || span >= 7}
+                wide={!isMobile && (i === 0 || span >= 7)}
                 expanded={openId === r.id}
                 onToggle={() => setOpenId(p => p === r.id ? null : r.id)}
                 onDraft={() => onViewDraft(r)}

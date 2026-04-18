@@ -1,4 +1,5 @@
 /* Light-theme nav matching the workspace design */
+import useIsMobile from "../hooks/useIsMobile";
 
 const logoMark = (
   <span aria-hidden="true" style={{
@@ -13,6 +14,8 @@ export default function AppHeader({
   logoSrc, sitePage, currentUser, onSignOut,
   onOpenWorkspace, onGoHowItWorks, onSetSitePage, payload, appStepActive,
 }) {
+  const isMobile = useIsMobile();
+
   return (
     <header>
       {/* ── Primary nav ── */}
@@ -25,7 +28,7 @@ export default function AppHeader({
           WebkitBackdropFilter: "blur(10px)",
           borderBottom: "1px solid var(--rule-soft)",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 32px", height: 64,
+          padding: isMobile ? "0 16px" : "0 32px", height: 64,
         }}
       >
         {/* Logo */}
@@ -41,8 +44,9 @@ export default function AppHeader({
         </button>
 
         {/* Nav right */}
-        <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {[
+        <nav style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 4 }}>
+          {/* Text links — hidden on mobile */}
+          {!isMobile && [
             { label: "Home",         action: () => onSetSitePage("home") },
             { label: "How it works", action: onGoHowItWorks },
             { label: "About",        action: () => onSetSitePage("about") },
@@ -61,13 +65,13 @@ export default function AppHeader({
             </button>
           ))}
 
-          <span style={{ width: 1, height: 18, background: "var(--rule)", margin: "0 8px" }} />
+          {!isMobile && <span style={{ width: 1, height: 18, background: "var(--rule)", margin: "0 8px" }} />}
 
           {!currentUser ? (
             <button type="button" onClick={() => onSetSitePage("signin")}
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                padding: "8px 14px", fontSize: 13.5, fontWeight: 500,
+                padding: "8px 12px", fontSize: 13.5, fontWeight: 500,
                 fontFamily: "'Instrument Sans', sans-serif",
                 color: sitePage === "signin" ? "var(--accent)" : "var(--muted)",
                 transition: "color 160ms", borderRadius: 4,
@@ -79,13 +83,15 @@ export default function AppHeader({
             </button>
           ) : (
             <>
-              <span style={{ padding: "8px 14px", fontSize: 13.5, color: "var(--ink-2)", fontWeight: 500 }}>
-                {currentUser.full_name?.split(" ")[0] || currentUser.email}
-              </span>
+              {!isMobile && (
+                <span style={{ padding: "8px 14px", fontSize: 13.5, color: "var(--ink-2)", fontWeight: 500 }}>
+                  {currentUser.full_name?.split(" ")[0] || currentUser.email}
+                </span>
+              )}
               <button type="button" onClick={onSignOut}
                 style={{
                   background: "none", border: "none", cursor: "pointer",
-                  padding: "8px 14px", fontSize: 13.5, fontWeight: 500,
+                  padding: "8px 10px", fontSize: 13.5, fontWeight: 500,
                   fontFamily: "'Instrument Sans', sans-serif",
                   color: "var(--muted)", transition: "color 160ms", borderRadius: 4,
                 }}
@@ -99,30 +105,30 @@ export default function AppHeader({
 
           <button type="button" onClick={onOpenWorkspace}
             style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "9px 16px", borderRadius: 4,
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: 4,
               border: "1px solid var(--ink)", background: "var(--ink)",
               color: "var(--bg)", fontSize: 13, fontWeight: 500, cursor: "pointer",
               fontFamily: "'Instrument Sans', sans-serif",
-              transition: "background 160ms", marginLeft: 4,
+              transition: "background 160ms", marginLeft: isMobile ? 0 : 4,
+              whiteSpace: "nowrap",
             }}
             onMouseEnter={e => e.currentTarget.style.background = "var(--ink-2)"}
             onMouseLeave={e => e.currentTarget.style.background = "var(--ink)"}
           >
-            Open Workspace →
+            {isMobile ? "Workspace →" : "Open Workspace →"}
           </button>
         </nav>
       </div>
 
       {/* ── Workspace sub-nav (breadcrumb) ── */}
       {sitePage === "app" && (
-        <div style={{
-          background: "var(--bg-2)", borderBottom: "1px solid var(--rule-soft)",
-        }}>
+        <div style={{ background: "var(--bg-2)", borderBottom: "1px solid var(--rule-soft)" }}>
           <div style={{
-            maxWidth: 1280, margin: "0 auto", padding: "12px 32px",
+            maxWidth: 1280, margin: "0 auto",
+            padding: isMobile ? "10px 16px" : "12px 32px",
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            flexWrap: "wrap", gap: 12,
+            flexWrap: "wrap", gap: 8,
           }}>
             <div style={{
               display: "flex", alignItems: "center", gap: 10,
@@ -146,7 +152,7 @@ export default function AppHeader({
                 </span>
               ))}
             </div>
-            {payload && (
+            {payload && !isMobile && (
               <div style={{
                 fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5,
                 color: "var(--dim)", letterSpacing: "0.06em",

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 const TONE_NAMES = ["Professional", "Friendly", "Short"];
 
@@ -11,6 +12,7 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
   const [editingBody, setEditingBody]   = useState(false);
   const [copied, setCopied]             = useState("");
   const [markedSent, setMarkedSent]     = useState(false);
+  const isMobile = useIsMobile();
   const toneClickCount = useRef({ Professional: 1, Friendly: 0, Short: 0 });
 
   const dateStr = useMemo(() => {
@@ -102,7 +104,7 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
   const lastName = (draft.name || "").split(" ").slice(-1)[0];
 
   return (
-    <div className="page-transition" style={{ maxWidth: 1180, margin: "0 auto", padding: "40px 32px 96px" }}>
+    <div className="page-transition" style={{ maxWidth: 1180, margin: "0 auto", padding: isMobile ? "24px 16px 64px" : "40px 32px 96px" }}>
 
       {/* Page header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 28, flexWrap: "wrap" }}>
@@ -119,8 +121,8 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
         <button className="btn-ghost" onClick={onBack}>← Back to results</button>
       </div>
 
-      {/* Main grid: letter + sidebar */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 280px", gap: 32, alignItems: "start" }}>
+      {/* Main grid: letter + sidebar (stacks on mobile) */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1fr) 280px", gap: 32, alignItems: "start" }}>
 
         {/* ── Letter ── */}
         <div>
@@ -129,7 +131,7 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
             background: "var(--paper)", border: "1px solid var(--rule)",
             borderRadius: 2,
             boxShadow: "0 1px 0 rgba(255,255,255,0.7) inset, 0 30px 60px -40px rgba(26,24,22,0.30), 0 8px 20px -16px rgba(26,24,22,0.10)",
-            padding: "56px 72px 64px", minHeight: 820,
+            padding: isMobile ? "36px 24px 40px" : "56px 72px 64px", minHeight: isMobile ? "auto" : 820,
           }}>
             {/* Perforation strip */}
             <div aria-hidden="true" style={{
@@ -281,7 +283,7 @@ export default function Draft({ draft, onBack, apiBase = "http://127.0.0.1:8000"
         </div>
 
         {/* ── Sidebar ── */}
-        <aside style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 96 }}>
+        <aside style={{ display: "flex", flexDirection: "column", gap: 16, position: isMobile ? "static" : "sticky", top: 96 }}>
 
           {/* Tone slider */}
           <div style={{ background: "var(--surface)", border: "1px solid var(--rule)", borderRadius: 8, padding: "20px 20px 22px" }}>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 const DEFAULT_UNIS = [
   "Stanford University", "MIT", "UC Berkeley", "Princeton University",
@@ -25,6 +26,7 @@ function Field({ label, hint, counter, children }) {
 }
 
 export default function Setup({ onRun, loading = false }) {
+  const isMobile = useIsMobile();
   const [interest, setInterest]     = useState("");
   const [profile, setProfile]       = useState("");
   const [unis, setUnis]             = useState([]);
@@ -58,7 +60,7 @@ export default function Setup({ onRun, loading = false }) {
   };
 
   return (
-    <div className="page-transition" style={{ maxWidth: 760, margin: "0 auto", padding: "64px 32px 96px" }}>
+    <div className="page-transition" style={{ maxWidth: 760, margin: "0 auto", padding: isMobile ? "32px 16px 64px" : "64px 32px 96px" }}>
 
       {/* Header */}
       <div style={{ marginBottom: 48 }}>
@@ -79,7 +81,7 @@ export default function Setup({ onRun, loading = false }) {
       {/* Form card */}
       <div style={{
         background: "var(--surface)", border: "1px solid var(--rule)",
-        borderRadius: 8, padding: "40px 40px 32px",
+        borderRadius: 8, padding: isMobile ? "24px 20px 20px" : "40px 40px 32px",
         boxShadow: "0 1px 0 rgba(255,255,255,0.6) inset, 0 24px 40px -28px rgba(26,24,22,0.10)",
         display: "flex", flexDirection: "column", gap: 36,
       }}>

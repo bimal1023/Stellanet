@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 /* ─── CSS custom properties for the light landing theme ─── */
 const THEME = {
@@ -66,6 +67,7 @@ function Reveal({ children, style, ...rest }) {
    NAV
 ══════════════════════════════════════════════════════════════ */
 function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
+  const isMobile = useIsMobile();
   return (
     <header style={{
       position: "sticky", top: 0, zIndex: 30,
@@ -75,7 +77,7 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
       borderBottom: "1px solid var(--lp-rule-soft)",
     }}>
       <div style={{
-        maxWidth: 1180, margin: "0 auto", padding: "0 32px",
+        maxWidth: 1180, margin: "0 auto", padding: isMobile ? "0 16px" : "0 32px",
         height: 64, display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         {/* Logo */}
@@ -90,13 +92,10 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
             color: "var(--lp-ink)",
           }}
         >
-          <span style={{
-            display: "inline-flex", alignItems: "center", marginRight: 6,
-          }}>
+          <span style={{ display: "inline-flex", alignItems: "center", marginRight: 6 }}>
             <span style={{
               display: "inline-block", width: 9, height: 9,
-              border: "1px solid var(--lp-ink)",
-              transform: "rotate(45deg)",
+              border: "1px solid var(--lp-ink)", transform: "rotate(45deg)",
               position: "relative", top: -2,
               background: `linear-gradient(to bottom right, transparent 50%, var(--lp-accent) 50%)`,
             }} />
@@ -105,9 +104,9 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
         </button>
 
         {/* Nav links */}
-        <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {[
-            { label: "Home",         action: () => onSetSitePage("home") },
+        <nav style={{ display: "flex", alignItems: "center", gap: isMobile ? 4 : 4 }}>
+          {/* Text links — desktop only */}
+          {!isMobile && [
             { label: "How it works", action: () => onScrollTo("how") },
             { label: "About",        action: () => onScrollTo("about") },
             { label: "Contact",      action: () => onScrollTo("contact") },
@@ -120,8 +119,7 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
                 background: "none", border: "none", cursor: "pointer",
                 padding: "8px 14px", fontSize: 13.5, fontWeight: 500,
                 fontFamily: "'Instrument Sans', sans-serif",
-                color: "var(--lp-muted)", transition: "color 160ms",
-                borderRadius: 4,
+                color: "var(--lp-muted)", transition: "color 160ms", borderRadius: 4,
               }}
               onMouseEnter={e => e.currentTarget.style.color = "var(--lp-ink)"}
               onMouseLeave={e => e.currentTarget.style.color = "var(--lp-muted)"}
@@ -130,14 +128,14 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
             </button>
           ))}
 
-          <span style={{ width: 1, height: 18, background: "var(--lp-rule)", margin: "0 8px" }} />
+          {!isMobile && <span style={{ width: 1, height: 18, background: "var(--lp-rule)", margin: "0 8px" }} />}
 
           <button
             type="button"
             onClick={() => onSetSitePage("signin")}
             style={{
               background: "none", border: "none", cursor: "pointer",
-              padding: "8px 14px", fontSize: 13.5, fontWeight: 500,
+              padding: "8px 10px", fontSize: 13.5, fontWeight: 500,
               fontFamily: "'Instrument Sans', sans-serif",
               color: "var(--lp-muted)", transition: "color 160ms", borderRadius: 4,
             }}
@@ -151,19 +149,19 @@ function LandingNav({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
             type="button"
             onClick={onOpenWorkspace}
             style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "9px 16px", borderRadius: 4,
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: isMobile ? "8px 12px" : "9px 16px", borderRadius: 4,
               border: "1px solid var(--lp-ink)",
               background: "var(--lp-ink)", color: "var(--lp-bg)",
               fontSize: 13, fontWeight: 500, cursor: "pointer",
               fontFamily: "'Instrument Sans', sans-serif",
-              transition: "background 160ms",
-              marginLeft: 4,
+              transition: "background 160ms", marginLeft: isMobile ? 0 : 4,
+              whiteSpace: "nowrap",
             }}
             onMouseEnter={e => e.currentTarget.style.background = "var(--lp-ink2)"}
             onMouseLeave={e => e.currentTarget.style.background = "var(--lp-ink)"}
           >
-            Open Workspace <span style={{ transition: "transform 200ms", display: "inline-block" }}>→</span>
+            {isMobile ? "Start →" : "Open Workspace →"}
           </button>
         </nav>
       </div>
@@ -269,12 +267,16 @@ function MockCard({ ctaRef, onOpenWorkspace }) {
    HERO SECTION
 ══════════════════════════════════════════════════════════════ */
 function HeroSection({ onOpenWorkspace, onScrollTo }) {
+  const isMobile = useIsMobile();
   const ctaRef = useRef(null);
 
   return (
     <section style={{
-      maxWidth: 1180, margin: "0 auto", padding: "96px 32px 72px",
-      display: "grid", gridTemplateColumns: "7fr 5fr", gap: 72, alignItems: "start",
+      maxWidth: 1180, margin: "0 auto",
+      padding: isMobile ? "56px 20px 48px" : "96px 32px 72px",
+      display: "grid",
+      gridTemplateColumns: isMobile ? "1fr" : "7fr 5fr",
+      gap: isMobile ? 40 : 72, alignItems: "start",
     }}>
       <div>
         {/* Eyebrow */}
@@ -360,8 +362,8 @@ function HeroSection({ onOpenWorkspace, onScrollTo }) {
         </div>
       </div>
 
-      {/* Mock card */}
-      <MockCard ctaRef={ctaRef} onOpenWorkspace={onOpenWorkspace} />
+      {/* Mock card — hidden on mobile */}
+      {!isMobile && <MockCard ctaRef={ctaRef} onOpenWorkspace={onOpenWorkspace} />}
     </section>
   );
 }
@@ -413,39 +415,57 @@ const FEATURES = [
 ];
 
 function FeaturesSection() {
+  const isMobile = useIsMobile();
   return (
     <Reveal>
-      <section style={{ maxWidth: 1180, margin: "0 auto", padding: "88px 32px" }} id="features">
+      <section style={{ maxWidth: 1180, margin: "0 auto", padding: isMobile ? "56px 20px" : "88px 32px" }} id="features">
         {/* Section head */}
-        <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 60, marginBottom: 56, alignItems: "end" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "240px 1fr",
+          gap: isMobile ? 16 : 60, marginBottom: isMobile ? 32 : 56, alignItems: "end",
+        }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 12 }}>
             <span style={S.labelMono}>§ 01 / What it does</span>
-            <p style={{ fontSize: 13.5, color: "var(--lp-muted)", maxWidth: 220, lineHeight: 1.55 }}>
+            {!isMobile && <p style={{ fontSize: 13.5, color: "var(--lp-muted)", maxWidth: 220, lineHeight: 1.55 }}>
               Three jobs, done well — instead of twelve done loosely.
-            </p>
+            </p>}
           </div>
-          <h2 style={{ ...S.serif, fontWeight: 400, fontSize: "clamp(34px, 4.2vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.012em", color: "var(--lp-ink)" }}>
+          <h2 style={{ ...S.serif, fontWeight: 400, fontSize: "clamp(28px, 4.2vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.012em", color: "var(--lp-ink)" }}>
             Read less. Reach out <em style={{ fontStyle: "italic", color: "var(--lp-accent)" }}>better.</em>
           </h2>
         </div>
 
         {/* Feature grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "var(--lp-rule-soft)", borderTop: "1px solid var(--lp-rule-soft)", borderBottom: "1px solid var(--lp-rule-soft)" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+          gap: isMobile ? 0 : 1,
+          background: isMobile ? "transparent" : "var(--lp-rule-soft)",
+          borderTop: "1px solid var(--lp-rule-soft)",
+          borderBottom: isMobile ? "none" : "1px solid var(--lp-rule-soft)",
+        }}>
           {FEATURES.map(({ num, icon, title, body }) => (
             <div
               key={num}
-              style={{ background: "var(--lp-bg)", padding: "36px 32px 40px", display: "flex", flexDirection: "column", gap: 16, transition: "background 200ms" }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--lp-surface)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--lp-bg)"}
+              style={{
+                background: "var(--lp-bg)",
+                padding: isMobile ? "28px 0" : "36px 32px 40px",
+                display: "flex", flexDirection: "column", gap: 14,
+                borderBottom: isMobile ? "1px solid var(--lp-rule-soft)" : "none",
+                transition: "background 200ms",
+              }}
+              onMouseEnter={e => { if (!isMobile) e.currentTarget.style.background = "var(--lp-surface)"; }}
+              onMouseLeave={e => { if (!isMobile) e.currentTarget.style.background = "var(--lp-bg)"; }}
             >
               <div style={S.labelMono}>{num}</div>
               <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--lp-ink)" }}>
                 {icon}
               </div>
-              <h3 style={{ ...S.serif, fontWeight: 500, fontSize: 24, lineHeight: 1.15, color: "var(--lp-ink)", letterSpacing: "-0.005em" }}>
+              <h3 style={{ ...S.serif, fontWeight: 500, fontSize: isMobile ? 22 : 24, lineHeight: 1.15, color: "var(--lp-ink)", letterSpacing: "-0.005em" }}>
                 {title}
               </h3>
-              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--lp-muted)", maxWidth: "36ch" }}>{body}</p>
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--lp-muted)" }}>{body}</p>
             </div>
           ))}
         </div>
@@ -485,37 +505,49 @@ function BlinkCursor() {
 }
 
 function HowSection() {
+  const isMobile = useIsMobile();
   return (
     <Reveal>
       <section id="how" style={{ background: "var(--lp-bg2)", borderTop: "1px solid var(--lp-rule-soft)", borderBottom: "1px solid var(--lp-rule-soft)" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "96px 32px 104px" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: isMobile ? "56px 20px 64px" : "96px 32px 104px" }}>
           {/* Section head */}
-          <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 60, marginBottom: 64, alignItems: "end" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "240px 1fr",
+            gap: isMobile ? 16 : 60, marginBottom: isMobile ? 36 : 64, alignItems: "end",
+          }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 12 }}>
               <span style={S.labelMono}>§ 02 / How it works</span>
-              <p style={{ fontSize: 13.5, color: "var(--lp-muted)", maxWidth: 220, lineHeight: 1.55 }}>
+              {!isMobile && <p style={{ fontSize: 13.5, color: "var(--lp-muted)", maxWidth: 220, lineHeight: 1.55 }}>
                 From a sentence about your interests to an email worth sending — usually in under ten minutes.
-              </p>
+              </p>}
             </div>
-            <h2 style={{ ...S.serif, fontWeight: 400, fontSize: "clamp(34px, 4.2vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.012em", color: "var(--lp-ink)" }}>
+            <h2 style={{ ...S.serif, fontWeight: 400, fontSize: "clamp(28px, 4.2vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.012em", color: "var(--lp-ink)" }}>
               Three steps. <em style={{ fontStyle: "italic", color: "var(--lp-accent)" }}>No</em> spray-and-pray.
             </h2>
           </div>
 
           {/* Steps */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? 0 : 0 }}>
             {STEPS.map(({ num, tag, title, body, vis }, i) => (
-              <div key={num} style={{ position: "relative", padding: i === 0 ? "28px 36px 32px 0" : "28px 36px 32px 36px", borderLeft: i > 0 ? "1px solid var(--lp-rule)" : "none" }}>
-                <div style={{ ...S.serif, fontStyle: "italic", fontSize: 56, fontWeight: 400, lineHeight: 1, color: "var(--lp-accent)", opacity: 0.85 }}>
+              <div key={num} style={{
+                position: "relative",
+                padding: isMobile
+                  ? "28px 0"
+                  : i === 0 ? "28px 36px 32px 0" : "28px 36px 32px 36px",
+                borderLeft: !isMobile && i > 0 ? "1px solid var(--lp-rule)" : "none",
+                borderTop: isMobile && i > 0 ? "1px solid var(--lp-rule)" : "none",
+              }}>
+                <div style={{ ...S.serif, fontStyle: "italic", fontSize: isMobile ? 44 : 56, fontWeight: 400, lineHeight: 1, color: "var(--lp-accent)", opacity: 0.85 }}>
                   {num}
                 </div>
-                <div style={{ ...S.labelMono, marginTop: 18, marginBottom: 8 }}>{tag}</div>
-                <h4 style={{ ...S.serif, fontWeight: 500, fontSize: 26, lineHeight: 1.18, color: "var(--lp-ink)", letterSpacing: "-0.005em" }}>
+                <div style={{ ...S.labelMono, marginTop: 14, marginBottom: 8 }}>{tag}</div>
+                <h4 style={{ ...S.serif, fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1.18, color: "var(--lp-ink)", letterSpacing: "-0.005em" }}>
                   {title}
                 </h4>
-                <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.62, color: "var(--lp-muted)", maxWidth: "32ch" }}>{body}</p>
+                <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.62, color: "var(--lp-muted)" }}>{body}</p>
                 <div style={{
-                  marginTop: 22, fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+                  marginTop: 18, fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
                   color: "var(--lp-ink2)", background: "var(--lp-surface)",
                   border: "1px solid var(--lp-rule)", padding: "10px 12px",
                   borderRadius: 4, display: "inline-flex", alignItems: "center", gap: 8,
@@ -535,9 +567,10 @@ function HowSection() {
    QUOTE
 ══════════════════════════════════════════════════════════════ */
 function QuoteSection() {
+  const isMobile = useIsMobile();
   return (
     <Reveal>
-      <section style={{ maxWidth: 980, margin: "0 auto", padding: "96px 32px", display: "grid", gridTemplateColumns: "60px 1fr", gap: 28, alignItems: "start" }}>
+      <section style={{ maxWidth: 980, margin: "0 auto", padding: isMobile ? "56px 20px" : "96px 32px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "60px 1fr", gap: isMobile ? 8 : 28, alignItems: "start" }}>
         <div style={{ ...S.serif, fontSize: 96, lineHeight: 0.7, color: "var(--lp-accent)", fontStyle: "italic", opacity: 0.55, userSelect: "none" }}>
           "
         </div>
@@ -558,10 +591,11 @@ function QuoteSection() {
    GET IN TOUCH
 ══════════════════════════════════════════════════════════════ */
 function ContactSection({ contactForm, onContactInput, onContactSubmit, contactBusy, contactSubmitted, contactError }) {
+  const isMobile = useIsMobile();
   return (
     <Reveal>
       <section id="contact" style={{ background: "var(--lp-bg2)", borderTop: "1px solid var(--lp-rule-soft)" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "96px 32px 104px", display: "grid", gridTemplateColumns: "5fr 7fr", gap: 80, alignItems: "start" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: isMobile ? "56px 20px 64px" : "96px 32px 104px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "5fr 7fr", gap: isMobile ? 36 : 80, alignItems: "start" }}>
 
           {/* Left — context */}
           <div>
@@ -586,7 +620,7 @@ function ContactSection({ contactForm, onContactInput, onContactSubmit, contactB
           </div>
 
           {/* Right — form */}
-          <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-rule)", borderRadius: 8, padding: "36px 36px 32px", boxShadow: "0 1px 0 rgba(255,255,255,0.6) inset, 0 24px 40px -28px rgba(26,24,22,0.10)" }}>
+          <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-rule)", borderRadius: 8, padding: isMobile ? "24px 20px" : "36px 36px 32px", boxShadow: "0 1px 0 rgba(255,255,255,0.6) inset, 0 24px 40px -28px rgba(26,24,22,0.10)" }}>
             {contactSubmitted ? (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ width: 40, height: 40, border: "1px solid var(--lp-ink)", transform: "rotate(45deg)", margin: "0 auto 24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -680,13 +714,14 @@ function ContactSection({ contactForm, onContactInput, onContactSubmit, contactB
    FOOTER
 ══════════════════════════════════════════════════════════════ */
 function LandingFooter({ onOpenWorkspace, onSetSitePage, onScrollTo }) {
+  const isMobile = useIsMobile();
   return (
-    <footer id="about" style={{ borderTop: "1px solid var(--lp-rule-soft)", background: "var(--lp-bg)", padding: "56px 32px 40px" }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 2fr", gap: 48, alignItems: "start" }}>
+    <footer id="about" style={{ borderTop: "1px solid var(--lp-rule-soft)", background: "var(--lp-bg)", padding: isMobile ? "40px 20px 32px" : "56px 32px 40px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 2fr", gap: isMobile ? 32 : 48, alignItems: "start" }}>
         <div style={{ ...S.serif, fontSize: 18, color: "var(--lp-ink2)", maxWidth: 320, lineHeight: 1.45, fontStyle: "italic", fontWeight: 400 }}>
           A small tool for a slow, careful part of academic life — finding the people whose work makes yours possible.
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 36 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)", gap: isMobile ? 24 : 36 }}>
           {[
             {
               heading: "Product",

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -71,6 +72,7 @@ export default function AuthSection({
     return () => { cancelled = true; };
   }, [authMode, googleClientId, onOAuthSignIn]);
 
+  const isMobile = useIsMobile();
   const showOAuth   = authMode === "signin" || authMode === "signup";
   const showTabs    = authMode === "signin" || authMode === "signup";
 
@@ -96,11 +98,11 @@ export default function AuthSection({
     <div className="page-transition" style={{
       minHeight: "calc(100vh - 64px)",
       display: "grid",
-      gridTemplateColumns: "1fr 1fr",
+      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
       background: "var(--bg)",
     }}>
-      {/* ── Left aside ── */}
-      <aside style={{
+      {/* ── Left aside — hidden on mobile ── */}
+      {!isMobile && <aside style={{
         background: "var(--bg-2)",
         borderRight: "1px solid var(--rule-soft)",
         padding: "80px 64px",
@@ -173,12 +175,12 @@ export default function AuthSection({
             </span>
           ))}
         </div>
-      </aside>
+      </aside>}
 
       {/* ── Right form ── */}
       <section style={{
-        padding: "80px 64px",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: isMobile ? "48px 24px" : "80px 64px",
+        display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "center",
         background: "var(--bg)",
       }}>
         <div style={{ width: "100%", maxWidth: 380 }}>

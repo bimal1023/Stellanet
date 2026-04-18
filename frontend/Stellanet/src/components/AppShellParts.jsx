@@ -1,4 +1,5 @@
 /* Light-theme shell parts */
+import useIsMobile from "../hooks/useIsMobile";
 
 export function Badge({ children, tone = "neutral" }) {
   const styles = {
@@ -69,13 +70,14 @@ export function DiscoveryLoadingOverlay({ show, message, step }) {
 }
 
 export function StartupFooter({ onNav, logoSrc }) {
+  const isMobile = useIsMobile();
   return (
     <footer style={{
       borderTop: "1px solid var(--rule-soft)",
       background: "var(--bg)",
-      padding: "56px 32px 40px",
+      padding: isMobile ? "40px 20px 32px" : "56px 32px 40px",
     }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 2fr", gap: 48, alignItems: "start" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 2fr", gap: isMobile ? 32 : 48, alignItems: "start" }}>
         <div style={{
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: 18, color: "var(--ink-2)",
@@ -85,7 +87,7 @@ export function StartupFooter({ onNav, logoSrc }) {
           A small tool for a slow, careful part of academic life — finding the people whose work makes yours possible.
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 36 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)", gap: isMobile ? 24 : 36 }}>
           {[
             {
               heading: "Product",
@@ -127,14 +129,15 @@ export function StartupFooter({ onNav, logoSrc }) {
       </div>
 
       <div style={{
-        maxWidth: 1180, margin: "56px auto 0", paddingTop: 22,
+        maxWidth: 1180, margin: "40px auto 0", paddingTop: 22,
         borderTop: "1px solid var(--rule-soft)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
+        flexWrap: "wrap", gap: 8,
         fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
         color: "var(--dim)", letterSpacing: "0.06em",
       }}>
         <span>© {new Date().getFullYear()} Stellanet — made for the long-form internet.</span>
-        <span>v0.4 · New York &amp; Cambridge</span>
+        {!isMobile && <span>v0.4 · New York &amp; Cambridge</span>}
       </div>
     </footer>
   );
